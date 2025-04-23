@@ -121,8 +121,12 @@ See the [CONTRIBUTING.md](CONTRIBUTING.md) file for instructions on setting up a
 
 The following REST endpoints are available:
 
-1. `GET /api/video/:id` - Get a video by ID
-2. `POST /api/video` - Create a new video
+1. `GET /api/short-video/:id` - Get a video by ID and also can be downloaded like this :
+ 
+ ```curl -o output.mp4 http://localhost:3123/api/short-video/<videoId>   ```
+
+  
+3. `POST /api/short-video` - Create a new video
    ```json
    {
      "scenes": [
@@ -137,8 +141,10 @@ The following REST endpoints are available:
      }
    }
    ```
-3. `DELETE /api/video/:id` - Delete a video by ID
-4. `GET /api/music-tags` - Get available music tags
+4. `DELETE /api/short-video/:id` - Delete a video by ID
+5. `GET /api/music-tags` - Get available music tags
+
+   
 
 ### Model Context Protocol (MCP)
 
