@@ -29,7 +29,7 @@ LOG_LEVEL=debug PEXELS_API_KEY= npx short-video-maker
 
 ```bash
 docker run -it --rm --name short-video-maker -p 3123:3123 \
-  -e PEXELS_API_KEY=your_pexels_api_key \
+  -e PEXELS_API_KEY= \
   gyoridavid/short-video-maker:latest
 ```
 
