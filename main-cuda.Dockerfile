@@ -6,33 +6,19 @@ ARG BASE_CUDA_RUN_CONTAINER=nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_V
 # Ref: https://github.com/ggml-org/whisper.cpp
 FROM ${BASE_CUDA_DEV_CONTAINER} AS install-whisper
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt update
-# whisper install dependencies
-RUN apt install -y \
-    git \
-    build-essential \
-    wget \
-    cmake \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-WORKDIR /whisper
-RUN git clone https://github.com/ggml-org/whisper.cpp.git .
-RUN git checkout v1.7.5
 
-ARG CUDA_DOCKER_ARCH=all
-ENV CUDA_DOCKER_ARCH=${CUDA_DOCKER_ARCH}
-ENV GGML_CUDA=1
-# Ref: https://stackoverflow.com/a/53464012
-ENV CUDA_MAIN_VERSION=12.3
-ENV LD_LIBRARY_PATH=/usr/local/cuda-${CUDA_MAIN_VERSION}/compat:$LD_LIBRARY_PATH
+RUN apt-get update && \
+    apt-get install --fix-missing --no-install-recommends -y bash git make vim wget g++ ffmpeg curl
 
-RUN make
-WORKDIR /whisper/models
-RUN sh ./download-ggml-model.sh medium.en
+WORKDIR /app/data/libs/whisper.cpp
+RUN git clone https://github.com/ggerganov/whisper.cpp.git -b v1.7.1 --depth 1 .
+
+RUN make clean
+RUN GGML_CUDA=1 make -j
+
+RUN sh ./models/download-ggml-model.sh medium.en
 
 FROM ${BASE_CUDA_RUN_CONTAINER} AS base
-ENV CUDA_MAIN_VERSION=12.3
-ENV LD_LIBRARY_PATH=/usr/local/cuda-${CUDA_MAIN_VERSION}/compat:$LD_LIBRARY_PATH
 
 # install node
 RUN apt-get update && apt-get install -y \
@@ -57,8 +43,8 @@ RUN apt install -y \
       cmake \
       ffmpeg \
       curl \
+      build-essential \
       make \
-      libsdl2-dev \
       # remotion dependencies
       libnss3 \
       libdbus-1-3 \
@@ -95,7 +81,7 @@ RUN pnpm build
 
 FROM base
 COPY static /app/static
-COPY --from=install-whisper /whisper /app/data/libs/whisper.cpp
+COPY --from=install-whisper /app/data/libs/whisper.cpp /app/data/libs/whisper.cpp
 COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=build /app/dist /app/dist
 COPY package.json /app/
