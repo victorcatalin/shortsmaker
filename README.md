@@ -1,4 +1,4 @@
-# Shorts Video Maker
+# Short Video Maker
 
 An open source automated video creation tool for generating short-form video content. Short Video Maker combines text-to-speech, automatic captions, background videos, and music to create engaging short videos from simple text inputs.
 
