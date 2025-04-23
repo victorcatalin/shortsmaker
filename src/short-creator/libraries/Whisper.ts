@@ -15,17 +15,20 @@ export class Whisper {
 
   static async init(config: Config): Promise<Whisper> {
     if (!config.runningInDocker) {
+      logger.debug("Installing WhisperCpp");
       await installWhisperCpp({
         to: config.whisperInstallPath,
-        version: "1.5.5",
+        version: config.whisperVersion,
         printOutput: config.whisperVerbose,
       });
-
+      logger.debug("WhisperCpp installed");
+      logger.debug("Downloading Whisper model");
       await downloadWhisperModel({
-        model: "medium.en",
+        model: config.whisperModel,
         folder: path.join(config.whisperInstallPath, "models"),
         printOutput: config.whisperVerbose,
       });
+      logger.debug("Whisper model downloaded");
     }
 
     return new Whisper(config);
@@ -34,11 +37,12 @@ export class Whisper {
   // todo shall we extract it to a Caption class?
   async CreateCaption(audioPath: string): Promise<Caption[]> {
     logger.debug("Starting to transcribe audio");
+    console.log("audioPath", audioPath);
     const { transcription } = await transcribe({
-      model: "medium.en", // possible options: "tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo"
+      model: this.config.whisperModel,
       whisperPath: this.config.whisperInstallPath,
       modelFolder: path.join(this.config.whisperInstallPath, "models"),
-      whisperCppVersion: "1.5.5",
+      whisperCppVersion: this.config.whisperVersion,
       inputPath: audioPath,
       tokenLevelTimestamps: true,
       printOutput: this.config.whisperVerbose,

@@ -4,8 +4,24 @@ import os from "os";
 import fs from "fs-extra";
 import pino from "pino";
 
+type whisperModels =
+  | "tiny"
+  | "tiny.en"
+  | "base"
+  | "base.en"
+  | "small"
+  | "small.en"
+  | "medium"
+  | "medium.en"
+  | "large-v1"
+  | "large-v2"
+  | "large-v3"
+  | "large-v3-turbo";
+
 const defaultLogLevel: pino.Level = "info";
 const defaultPort = 3123;
+const whisperVersion = "1.7.5";
+const whisperModel: whisperModels = "medium.en"; // possible options: "tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo"
 
 // Create the global logger
 export const logger = pino({
@@ -34,6 +50,8 @@ export class Config {
   public port: number;
   public runningInDocker: boolean;
   public devMode: boolean;
+  public whisperVersion: string = whisperVersion;
+  public whisperModel: whisperModels = whisperModel;
 
   constructor() {
     this.dataDirPath =
