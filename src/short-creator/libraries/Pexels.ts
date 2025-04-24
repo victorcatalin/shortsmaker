@@ -4,6 +4,8 @@ import type { Video } from "../../types/shorts";
 
 const jokerTerms: string[] = ["nature", "globe", "space", "ocean"];
 const durationBufferSeconds = 3;
+const defaultTimeoutMs = 5000;
+const retryTimes = 3;
 
 export class PexelsAPI {
   constructor(private API_KEY: string) {}
@@ -12,6 +14,7 @@ export class PexelsAPI {
     searchTerm: string,
     minDurationSeconds: number,
     excludeIds: string[],
+    timeout: number,
   ): Promise<Video> {
     if (!this.API_KEY) {
       throw new Error("API key not set");
@@ -28,6 +31,7 @@ export class PexelsAPI {
         method: "GET",
         headers,
         redirect: "follow",
+        signal: AbortSignal.timeout(timeout),
       },
     )
       .then((res) => res.json())
@@ -100,6 +104,8 @@ export class PexelsAPI {
     searchTerms: string[],
     minDurationSeconds: number,
     excludeIds: string[],
+    timeout: number = defaultTimeoutMs,
+    retryCounter: number = 0,
   ): Promise<Video> {
     // shuffle the search terms to randomize the search order
     const shuffledJokerTerms = jokerTerms.sort(() => Math.random() - 0.5);
@@ -111,10 +117,36 @@ export class PexelsAPI {
           searchTerm,
           minDurationSeconds,
           excludeIds,
+          timeout,
         );
-      } catch (e) {
+      } catch (error: unknown) {
+        if (
+          error instanceof Error &&
+          error instanceof DOMException &&
+          error.name === "TimeoutError"
+        ) {
+          if (retryCounter < retryTimes) {
+            logger.warn(
+              { searchTerm, retryCounter },
+              "Timeout error, retrying...",
+            );
+            return await this.findVideo(
+              searchTerms,
+              minDurationSeconds,
+              excludeIds,
+              timeout,
+              retryCounter + 1,
+            );
+          }
+          logger.error(
+            { searchTerm, retryCounter },
+            "Timeout error, retry limit reached",
+          );
+          throw error;
+        }
+
         logger.error(
-          { error: e, term: searchTerm },
+          { error, term: searchTerm },
           "Error finding video in Pexels API for term",
         );
       }
