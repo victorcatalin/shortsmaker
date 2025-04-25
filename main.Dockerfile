@@ -73,6 +73,7 @@ COPY package.json /app/
 # app configuration via environment variables
 ENV DATA_DIR_PATH=/app/data
 ENV DOCKER=true
+ENV WHISPER_MODEL=small.en
 
 # install kokoro, headless chrome and ensure music files are present
 RUN node dist/scripts/install.js
