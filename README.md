@@ -10,6 +10,12 @@ This repository was open-sourced by the [AI Agents A-Z Youtube Channel](https://
 - RAM: at least 2 GB is required, but 4 GB is recommended. when using docker, you can limit the memory usage with the `CONCURRENCY` environment variable (see below)
 - GPU: optional, makes the caption generation a lot faster (whisper.cpp) and the video rendering somewhat faster
 
+## Software requirements
+
+When running with npx
+- ffmpeg
+- build-essential, git, cmake, wget to build Whisper.cpp
+
 ## Watch the official video on how to generate videos with n8n
 
 [![Automated faceless video generation (n8n + MCP) with captions, background music, local and 100% free](https://img.youtube.com/vi/jzsQpn-AciM/0.jpg)](https://www.youtube.com/watch?v=jzsQpn-AciM)
