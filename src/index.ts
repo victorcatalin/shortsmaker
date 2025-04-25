@@ -57,7 +57,7 @@ async function main() {
   );
 
   logger.debug("initializing the server");
-  const server = new Server(config.port, shortCreator);
+  const server = new Server(config, shortCreator);
   const app = server.start();
 
   // todo add shutdown handler

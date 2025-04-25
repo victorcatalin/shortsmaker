@@ -19,7 +19,7 @@ export type Scene = {
   captions: Caption[];
   video: string;
   audio: {
-    dataUri: string;
+    url: string;
     duration: number;
   };
 };

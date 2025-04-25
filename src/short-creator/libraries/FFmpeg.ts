@@ -11,7 +11,7 @@ export class FFMpeg {
     });
   }
 
-  async normalizeAudioForWhisper(
+  async saveNormalizedAudio(
     audio: ArrayBuffer,
     outputPath: string,
   ): Promise<string> {
@@ -62,6 +62,28 @@ export class FFMpeg {
         .on("end", () => {
           const buffer = Buffer.concat(chunk);
           resolve(`data:audio/mp3;base64,${buffer.toString("base64")}`);
+        })
+        .on("error", (err) => {
+          reject(err);
+        });
+    });
+  }
+
+  async saveToMp3(audio: ArrayBuffer, filePath: string): Promise<string> {
+    const inputStream = new Readable();
+    inputStream.push(Buffer.from(audio));
+    inputStream.push(null);
+    return new Promise((resolve, reject) => {
+      ffmpeg()
+        .input(inputStream)
+        .audioCodec("libmp3lame")
+        .audioBitrate(128)
+        .audioChannels(2)
+        .toFormat("mp3")
+        .save(filePath)
+        .on("end", () => {
+          logger.debug("Audio conversion complete");
+          resolve(filePath);
         })
         .on("error", (err) => {
           reject(err);

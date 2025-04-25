@@ -98,6 +98,7 @@ export class ShortCreator {
       const scenes: Scene[] = [];
       let totalDuration = 0;
       const excludeVideoIds = [];
+      const tempFiles = [];
 
       let index = 0;
       for (const scene of inputScenes) {
@@ -110,15 +111,17 @@ export class ShortCreator {
           audioLength += config.paddingBack / 1000;
         }
 
-        const tempAudioPath = path.join(
-          this.config.tempDirPath,
-          `${cuid()}.wav`,
-        );
-        await this.ffmpeg.normalizeAudioForWhisper(audioStream, tempAudioPath);
-        const captions = await this.whisper.CreateCaption(tempAudioPath);
-        fs.removeSync(tempAudioPath);
+        const tempId = cuid();
+        const tempWavFileName = `${tempId}.wav`;
+        const tempMp3FileName = `${tempId}.mp3`;
+        const tempWavPath = path.join(this.config.tempDirPath, tempWavFileName);
+        const tempMp3Path = path.join(this.config.tempDirPath, tempMp3FileName);
+        tempFiles.push(tempWavPath, tempMp3Path);
 
-        const audioDataUri = await this.ffmpeg.createMp3DataUri(audioStream);
+        await this.ffmpeg.saveNormalizedAudio(audioStream, tempWavPath);
+        const captions = await this.whisper.CreateCaption(tempWavPath);
+
+        await this.ffmpeg.saveToMp3(audioStream, tempMp3Path);
         const video = await this.pexelsApi.findVideo(
           scene.searchTerms,
           audioLength,
@@ -130,7 +133,7 @@ export class ShortCreator {
           captions,
           video: video.url,
           audio: {
-            dataUri: audioDataUri,
+            url: `http://localhost:${this.config.port}/api/tmp/${tempMp3FileName}`,
             duration: audioLength,
           },
         });
@@ -156,6 +159,10 @@ export class ShortCreator {
         },
         videoId,
       );
+
+      for (const file of tempFiles) {
+        fs.removeSync(file);
+      }
 
       return videoId;
     } catch (error) {
