@@ -19,8 +19,6 @@ export const shortVideoSchema = z.object({
       captions: z.custom<Caption[]>(),
       audio: z.object({
         url: z.string(),
-        // dataUri: z.string(),
-        // fileName: z.string(),
         duration: z.number(),
       }),
       video: z.string(),

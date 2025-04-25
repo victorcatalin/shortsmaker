@@ -4,12 +4,12 @@ import type {
   Response as ExpressResponse,
 } from "express";
 import fs from "fs-extra";
+import path from "path";
 
 import { validateCreateShortInput } from "../validator";
 import { ShortCreator } from "../../short-creator/ShortCreator";
 import { logger } from "../../logger";
 import { Config } from "../../config";
-import path from "path";
 
 // todo abstract class
 export class APIRouter {
