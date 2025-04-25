@@ -14,7 +14,7 @@ RUN git clone https://github.com/ggml-org/whisper.cpp.git .
 RUN git checkout v1.5.5
 RUN make
 WORKDIR /whisper/models
-RUN sh ./download-ggml-model.sh medium.en
+RUN sh ./download-ggml-model.sh base.en
 
 FROM node:22-bookworm-slim AS base
 ENV DEBIAN_FRONTEND=noninteractive
@@ -65,7 +65,7 @@ RUN pnpm build
 
 FROM base
 COPY static /app/static
-COPY --from=install-whisper /whisper /app/data/libs/whisper.cpp
+COPY --from=install-whisper /whisper /app/data/libs/whisper
 COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=build /app/dist /app/dist
 COPY package.json /app/
@@ -73,6 +73,11 @@ COPY package.json /app/
 # app configuration via environment variables
 ENV DATA_DIR_PATH=/app/data
 ENV DOCKER=true
+ENV WHISPER_MODEL=base.en
+# number of chrome tabs to use for rendering
+ENV CONCURRENCY=1
+# video cache - 100MB
+ENV VIDEO_CACHE_SIZE_IN_BYTES=104857600
 
 # install kokoro, headless chrome and ensure music files are present
 RUN node dist/scripts/install.js

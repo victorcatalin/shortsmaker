@@ -18,7 +18,7 @@ export const shortVideoSchema = z.object({
     z.object({
       captions: z.custom<Caption[]>(),
       audio: z.object({
-        dataUri: z.string(),
+        url: z.string(),
         duration: z.number(),
       }),
       video: z.string(),
@@ -183,7 +183,7 @@ export const ShortVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
             key={`scene-${i}`}
           >
             <OffthreadVideo src={video} muted />
-            <Audio src={audio.dataUri} />
+            <Audio src={audio.url} />
             {pages.map((page, j) => {
               return (
                 <Sequence

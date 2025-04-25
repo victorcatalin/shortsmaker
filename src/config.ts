@@ -21,7 +21,7 @@ type whisperModels =
 const defaultLogLevel: pino.Level = "info";
 const defaultPort = 3123;
 const whisperVersion = "1.7.1";
-const whisperModel: whisperModels = "medium.en"; // possible options: "tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo"
+const defaultWhisperModel: whisperModels = "medium.en"; // possible options: "tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo"
 
 // Create the global logger
 export const logger = pino({
@@ -51,7 +51,11 @@ export class Config {
   public runningInDocker: boolean;
   public devMode: boolean;
   public whisperVersion: string = whisperVersion;
-  public whisperModel: whisperModels = whisperModel;
+  public whisperModel: whisperModels = defaultWhisperModel;
+
+  // docker-specific, performance-related settings to prevent memory issues
+  public concurrency?: number;
+  public videoCacheSizeInBytes: number | null = null;
 
   constructor() {
     this.dataDirPath =
@@ -59,7 +63,7 @@ export class Config {
       path.join(os.homedir(), ".ai-agents-az-video-generator");
     this.libsDirPath = path.join(this.dataDirPath, "libs");
 
-    this.whisperInstallPath = path.join(this.libsDirPath, "whisper.cpp");
+    this.whisperInstallPath = path.join(this.libsDirPath, "whisper");
     this.videosDirPath = path.join(this.dataDirPath, "videos");
     this.tempDirPath = path.join(this.dataDirPath, "temp");
 
@@ -78,6 +82,15 @@ export class Config {
     this.port = process.env.PORT ? parseInt(process.env.PORT) : defaultPort;
     this.runningInDocker = process.env.DOCKER === "true";
     this.devMode = process.env.DEV === "true";
+
+    this.whisperModel = (process.env.WHISPER_MODEL ??
+      defaultWhisperModel) as whisperModels;
+
+    this.concurrency = process.env.CONCURRENCY ? parseInt(process.env.CONCURRENCY) : undefined;
+
+    if (process.env.VIDEO_CACHE_SIZE_IN_BYTES) {  
+      this.videoCacheSizeInBytes = parseInt(process.env.VIDEO_CACHE_SIZE_IN_BYTES);
+    }
   }
 
   public ensureConfig() {

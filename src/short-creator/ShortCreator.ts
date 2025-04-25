@@ -88,72 +88,87 @@ export class ShortCreator {
     inputScenes: SceneInput[],
     config: RenderConfig,
   ): Promise<string> {
-    logger.debug(
-      {
-        inputScenes,
-      },
-      "Creating short video",
-    );
-    const scenes: Scene[] = [];
-    let totalDuration = 0;
-    const excludeVideoIds = [];
+    try {
+      logger.debug(
+        {
+          inputScenes,
+        },
+        "Creating short video",
+      );
+      const scenes: Scene[] = [];
+      let totalDuration = 0;
+      const excludeVideoIds = [];
+      const tempFiles = [];
 
-    let index = 0;
-    for (const scene of inputScenes) {
-      const audio = await this.kokoro.generate(scene.text, "af_heart");
-      let { audioLength } = audio;
-      const { audio: audioStream } = audio;
+      let index = 0;
+      for (const scene of inputScenes) {
+        const audio = await this.kokoro.generate(scene.text, "af_heart");
+        let { audioLength } = audio;
+        const { audio: audioStream } = audio;
 
-      // add the paddingBack in seconds to the last scene
-      if (index + 1 === inputScenes.length && config.paddingBack) {
-        audioLength += config.paddingBack / 1000;
+        // add the paddingBack in seconds to the last scene
+        if (index + 1 === inputScenes.length && config.paddingBack) {
+          audioLength += config.paddingBack / 1000;
+        }
+
+        const tempId = cuid();
+        const tempWavFileName = `${tempId}.wav`;
+        const tempMp3FileName = `${tempId}.mp3`;
+        const tempWavPath = path.join(this.config.tempDirPath, tempWavFileName);
+        const tempMp3Path = path.join(this.config.tempDirPath, tempMp3FileName);
+        tempFiles.push(tempWavPath, tempMp3Path);
+
+        await this.ffmpeg.saveNormalizedAudio(audioStream, tempWavPath);
+        const captions = await this.whisper.CreateCaption(tempWavPath);
+
+        await this.ffmpeg.saveToMp3(audioStream, tempMp3Path);
+        const video = await this.pexelsApi.findVideo(
+          scene.searchTerms,
+          audioLength,
+          excludeVideoIds,
+        );
+        excludeVideoIds.push(video.id);
+
+        scenes.push({
+          captions,
+          video: video.url,
+          audio: {
+            url: `http://localhost:${this.config.port}/api/tmp/${tempMp3FileName}`,
+            duration: audioLength,
+          },
+        });
+
+        totalDuration += audioLength;
+        index++;
+      }
+      if (config.paddingBack) {
+        totalDuration += config.paddingBack / 1000;
       }
 
-      const tempAudioPath = path.join(this.config.tempDirPath, `${cuid()}.wav`);
-      await this.ffmpeg.normalizeAudioForWhisper(audioStream, tempAudioPath);
-      const captions = await this.whisper.CreateCaption(tempAudioPath);
-      fs.removeSync(tempAudioPath);
+      const selectedMusic = this.findMusic(totalDuration, config.music);
+      logger.debug({ selectedMusic }, "Selected music for the video");
 
-      const audioDataUri = await this.ffmpeg.createMp3DataUri(audioStream);
-      const video = await this.pexelsApi.findVideo(
-        scene.searchTerms,
-        audioLength,
-        excludeVideoIds,
+      await this.remotion.render(
+        {
+          music: selectedMusic,
+          scenes,
+          config: {
+            durationMs: totalDuration * 1000,
+            paddingBack: config.paddingBack,
+          },
+        },
+        videoId,
       );
-      excludeVideoIds.push(video.id);
 
-      scenes.push({
-        captions,
-        video: video.url,
-        audio: {
-          dataUri: audioDataUri,
-          duration: audioLength,
-        },
-      });
+      for (const file of tempFiles) {
+        fs.removeSync(file);
+      }
 
-      totalDuration += audioLength;
-      index++;
+      return videoId;
+    } catch (error) {
+      logger.error({ error: error }, "Error creating short video");
+      throw error;
     }
-    if (config.paddingBack) {
-      totalDuration += config.paddingBack / 1000;
-    }
-
-    const selectedMusic = this.findMusic(totalDuration, config.music);
-    logger.debug({ selectedMusic }, "Selected music for the video");
-
-    await this.remotion.render(
-      {
-        music: selectedMusic,
-        scenes,
-        config: {
-          durationMs: totalDuration * 1000,
-          paddingBack: config.paddingBack,
-        },
-      },
-      videoId,
-    );
-
-    return videoId;
   }
 
   public getVideoPath(videoId: string): string {
