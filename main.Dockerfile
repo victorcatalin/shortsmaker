@@ -14,7 +14,7 @@ RUN git clone https://github.com/ggml-org/whisper.cpp.git .
 RUN git checkout v1.5.5
 RUN make
 WORKDIR /whisper/models
-RUN sh ./download-ggml-model.sh medium.en
+RUN sh ./download-ggml-model.sh small.en
 
 FROM node:22-bookworm-slim AS base
 ENV DEBIAN_FRONTEND=noninteractive
