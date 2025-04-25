@@ -53,7 +53,9 @@ export class Config {
   public whisperVersion: string = whisperVersion;
   public whisperModel: whisperModels = defaultWhisperModel;
 
+  // docker-specific, performance-related settings to prevent memory issues
   public concurrency?: number;
+  public videoCacheSizeInBytes: number | null = null;
 
   constructor() {
     this.dataDirPath =
@@ -85,6 +87,10 @@ export class Config {
       defaultWhisperModel) as whisperModels;
 
     this.concurrency = process.env.CONCURRENCY ? parseInt(process.env.CONCURRENCY) : undefined;
+
+    if (process.env.VIDEO_CACHE_SIZE_IN_BYTES) {  
+      this.videoCacheSizeInBytes = parseInt(process.env.VIDEO_CACHE_SIZE_IN_BYTES);
+    }
   }
 
   public ensureConfig() {

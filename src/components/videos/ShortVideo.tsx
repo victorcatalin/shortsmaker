@@ -6,7 +6,6 @@ import {
   Audio,
   staticFile,
   OffthreadVideo,
-  Video,
 } from "remotion";
 import { z } from "zod";
 import { loadFont } from "@remotion/google-fonts/BarlowCondensed";
@@ -185,7 +184,7 @@ export const ShortVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
             durationInFrames={durationInFrames}
             key={`scene-${i}`}
           >
-            <Video src={video} muted />
+            <OffthreadVideo src={video} muted />
             <Audio src={audio.url} />
             {pages.map((page, j) => {
               return (
