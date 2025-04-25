@@ -27,7 +27,8 @@ export class Whisper {
         model: config.whisperModel,
         folder: path.join(config.whisperInstallPath, "models"),
         printOutput: config.whisperVerbose,
-        onProgress: (progress) => {
+        onProgress: (downloadedBytes, totalBytes) => {
+          const progress = `${Math.round((downloadedBytes / totalBytes) * 100)}%`;
           logger.debug(
             { progress, model: config.whisperModel },
             "Downloading Whisper model",
