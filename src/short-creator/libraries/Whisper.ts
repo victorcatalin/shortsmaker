@@ -19,7 +19,7 @@ export class Whisper {
       await installWhisperCpp({
         to: config.whisperInstallPath,
         version: config.whisperVersion,
-        printOutput: config.whisperVerbose,
+        printOutput: true,
       });
       logger.debug("WhisperCpp installed");
       logger.debug("Downloading Whisper model");
@@ -27,6 +27,12 @@ export class Whisper {
         model: config.whisperModel,
         folder: path.join(config.whisperInstallPath, "models"),
         printOutput: config.whisperVerbose,
+        onProgress: (progress) => {
+          logger.debug(
+            { progress, model: config.whisperModel },
+            "Downloading Whisper model",
+          );
+        },
       });
       logger.debug("Whisper model downloaded");
     }
