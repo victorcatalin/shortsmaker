@@ -26,10 +26,12 @@ LOG_LEVEL=debug PEXELS_API_KEY= npx short-video-maker
 
 ### Using Docker
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > To avoid memory issues, I've limited the number of concurrent Chrome tabs (for rendering) to 2 for both images. Feel free to increase this number if you have enough RAM and experiment the right value for your machine/VPS.
 
 #### CPU image
+
+To increase performance, I've set the Whisper model to `base.en`.
 
 ```bash
 docker run -it --rm --name short-video-maker -p 3123:3123 \
@@ -38,6 +40,7 @@ docker run -it --rm --name short-video-maker -p 3123:3123 \
 ```
 
 #### NVIDIA GPUs
+
 ```bash
 docker run -it --rm --name shorts-video-maker -p 3123:3123 \
   -e PEXELS_API_KEY= --gpus=all \
@@ -50,13 +53,13 @@ Join our [Discord](https://discord.gg/G7FJVJQ6RE) community for support and disc
 
 ## Environment Variables
 
-| Variable        | Description                                                                        |
-| --------------- | ---------------------------------------------------------------------------------- |
+| Variable        | Description                                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | CONCURRENCY     | Number of Chrome tabs to use to render the video. Used to limit the memory usage in the Docker containers (default: undefined) |
-| PEXELS_API_KEY  | Your Pexels API key for background video sourcing                                  |
-| PORT            | Port for the API/MCP server (default: 3123)                                        |
-| LOG_LEVEL       | Log level for the server (default: info, options: trace, debug, info, warn, error) |
-| WHISPER_VERBOSE | Verbose mode for Whisper (default: false)                                          |
+| PEXELS_API_KEY  | Your Pexels API key for background video sourcing                                                                              |
+| PORT            | Port for the API/MCP server (default: 3123)                                                                                    |
+| LOG_LEVEL       | Log level for the server (default: info, options: trace, debug, info, warn, error)                                             |
+| WHISPER_VERBOSE | Verbose mode for Whisper (default: false)                                                                                      |
 
 ## Example
 
@@ -127,10 +130,9 @@ See the [CONTRIBUTING.md](CONTRIBUTING.md) file for instructions on setting up a
 The following REST endpoints are available:
 
 1. `GET /api/short-video/:id` - Get a video by ID and also can be downloaded like this :
- 
- ```curl -o output.mp4 http://localhost:3123/api/short-video/<videoId>   ```
 
-  
+`curl -o output.mp4 http://localhost:3123/api/short-video/<videoId>   `
+
 3. `POST /api/short-video` - Create a new video
    ```json
    {
@@ -148,8 +150,6 @@ The following REST endpoints are available:
    ```
 4. `DELETE /api/short-video/:id` - Delete a video by ID
 5. `GET /api/music-tags` - Get available music tags
-
-   
 
 ### Model Context Protocol (MCP)
 
