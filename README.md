@@ -27,12 +27,13 @@ LOG_LEVEL=debug PEXELS_API_KEY= npx short-video-maker
 ### Using Docker
 
 > [!IMPORTANT]
-> To avoid memory issues, I've limited the number of concurrent Chrome tabs (for rendering) to 1 for both images. Feel free to increase this number if you have enough RAM and experiment the right value for your machine/VPS.
+> To avoid memory issues, I had to limit the number of concurrent Chrome tabs used for rendering to 1 for both images. If you have more RAM, feel free to experiment with the sweet spot for your machine/VPS.
 
 #### CPU image
 
-To increase performance, I've set the Whisper model to `base.en`.
-With 2 vCPUs it takes ~7 seconds for Kokoro to generate 10 seconds of audio, and ~2 seconds for Whisper to generate the captions.
+To increase the performance, I've set the Whisper model to `base.en` for both Docker images. This model is smaller and faster than the `medium.en` model, however it is somewhat less accurate.
+
+With 2 vCPUs it takes ~7 seconds for Kokoro to generate 10 seconds of audio, and ~2 seconds for Whisper to generate the captions for a scene.
 
 ```bash
 docker run -it --rm --name short-video-maker -p 3123:3123 \
@@ -54,14 +55,14 @@ Join our [Discord](https://discord.gg/G7FJVJQ6RE) community for support and disc
 
 ## Environment Variables
 
-| Variable        | Description                                                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| PEXELS_API_KEY  | Your Pexels API key for background video sourcing                                                                              |
-| PORT            | Port for the API/MCP server (default: 3123)                                                                                    |
-| LOG_LEVEL       | Log level for the server (default: info, options: trace, debug, info, warn, error)                                             |
-| WHISPER_VERBOSE | Verbose mode for Whisper (default: false)                                                                                      |
-| CONCURRENCY     | Number of Chrome tabs to use to render the video. Used to limit the memory usage in the Docker containers (default: undefined) |
-| VIDEO_CACHE_SIZE_IN_BYTES | [cache for <OffthreadVideo> frames](https://www.remotion.dev/docs/renderer/select-composition#offthreadvideocachesizeinbytes) - used to prevent memory related crashes in the Docker images (default: undefined)                                                                        |
+| Variable                  | Description                                                                                                                                                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PEXELS_API_KEY            | Your Pexels API key for background video sourcing                                                                                                                                                                |
+| PORT                      | Port for the API/MCP server (default: 3123)                                                                                                                                                                      |
+| LOG_LEVEL                 | Log level for the server (default: info, options: trace, debug, info, warn, error)                                                                                                                               |
+| WHISPER_VERBOSE           | Verbose mode for Whisper (default: false)                                                                                                                                                                        |
+| CONCURRENCY               | [Number of Chrome tabs to use to render the video.](https://www.remotion.dev/docs/terminology/concurrency) Used to limit the memory usage in the Docker containers (default: undefined)                          |
+| VIDEO_CACHE_SIZE_IN_BYTES | [cache for <OffthreadVideo> frames](https://www.remotion.dev/docs/renderer/select-composition#offthreadvideocachesizeinbytes) - used to prevent memory related crashes in the Docker images (default: undefined) |
 
 ## Example
 
