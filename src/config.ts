@@ -53,6 +53,8 @@ export class Config {
   public whisperVersion: string = whisperVersion;
   public whisperModel: whisperModels = defaultWhisperModel;
 
+  public concurrency?: number;
+
   constructor() {
     this.dataDirPath =
       process.env.DATA_DIR_PATH ??
@@ -81,6 +83,8 @@ export class Config {
 
     this.whisperModel = (process.env.WHISPER_MODEL ??
       defaultWhisperModel) as whisperModels;
+
+    this.concurrency = process.env.CONCURRENCY ? parseInt(process.env.CONCURRENCY) : undefined;
   }
 
   public ensureConfig() {

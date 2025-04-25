@@ -36,8 +36,7 @@ export class Whisper {
 
   // todo shall we extract it to a Caption class?
   async CreateCaption(audioPath: string): Promise<Caption[]> {
-    logger.debug("Starting to transcribe audio");
-    console.log("audioPath", audioPath);
+    logger.debug({ audioPath }, "Starting to transcribe audio");
     const { transcription } = await transcribe({
       model: this.config.whisperModel,
       whisperPath: this.config.whisperInstallPath,
@@ -47,15 +46,11 @@ export class Whisper {
       tokenLevelTimestamps: true,
       printOutput: this.config.whisperVerbose,
       onProgress: (progress) => {
-        logger.debug(`Transcribing is ${progress} complete`);
+        logger.debug({ audioPath }, `Transcribing is ${progress} complete`);
       },
     });
-    logger.debug("Transcription finished");
+    logger.debug({ audioPath }, "Transcription finished, creating captions");
 
-    // remove the audio file
-    await fs.remove(audioPath);
-
-    logger.debug("Creating captions from transcription");
     const captions: Caption[] = [];
     transcription.forEach((record) => {
       if (record.text === "") {
@@ -83,7 +78,7 @@ export class Whisper {
         });
       });
     });
-    logger.debug("Captions created");
+    logger.debug({ audioPath }, "Captions created");
     return captions;
   }
 }

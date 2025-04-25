@@ -7,6 +7,7 @@ This repository was open-sourced by the [AI Agents A-Z Youtube Channel](https://
 ## Hardware requirements
 
 - CPU: at least 2 cores are recommended
+- RAM: at least 2 GB is required, but 4 GB is recommended. when using docker, you can limit the memory usage with the `CONCURRENCY` environment variable (see below)
 - GPU: optional, makes the caption generation a lot faster (whisper.cpp) and the video rendering somewhat faster
 
 ## Watch the official video on how to generate videos with n8n
@@ -24,6 +25,9 @@ LOG_LEVEL=debug PEXELS_API_KEY= npx short-video-maker
 ```
 
 ### Using Docker
+
+> [!IMPORTANT]  
+> To avoid memory issues, I've limited the number of concurrent Chrome tabs (for rendering) to 2 for both images. Feel free to increase this number if you have enough RAM and experiment the right value for your machine/VPS.
 
 #### CPU image
 
@@ -48,6 +52,7 @@ Join our [Discord](https://discord.gg/G7FJVJQ6RE) community for support and disc
 
 | Variable        | Description                                                                        |
 | --------------- | ---------------------------------------------------------------------------------- |
+| CONCURRENCY     | Number of Chrome tabs to use to render the video. Used to limit the memory usage in the Docker containers (default: undefined) |
 | PEXELS_API_KEY  | Your Pexels API key for background video sourcing                                  |
 | PORT            | Port for the API/MCP server (default: 3123)                                        |
 | LOG_LEVEL       | Log level for the server (default: info, options: trace, debug, info, warn, error) |
