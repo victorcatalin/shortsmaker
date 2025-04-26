@@ -1,32 +1,43 @@
 /* eslint-disable @remotion/deterministic-randomness */
-import fs from "fs-extra";
-import cuid from "cuid";
+import fs   from "fs-extra";
 import path from "path";
+import cuid from "cuid";
 
-import { Kokoro } from "./libraries/Kokoro";
-import { Remotion } from "./libraries/Remotion";
-import { Whisper } from "./libraries/Whisper";
-import { FFMpeg } from "./libraries/FFmpeg";
+import { Config }    from "../config";
+import { Kokoro }    from "./libraries/Kokoro";
+import { Remotion }  from "./libraries/Remotion";
+import { Whisper }   from "./libraries/Whisper";
+import { FFMpeg }    from "./libraries/FFmpeg";
 import { PexelsAPI } from "./libraries/Pexels";
-import { Config } from "../config";
-import { logger } from "../logger";
 import { MusicManager } from "./music";
-import { type Music } from "../types/shorts";
+import { logger } from "../logger";
+
 import type {
-  SceneInput,
-  RenderConfig,
-  Scene,
-  VideoStatus,
-  MusicMoodEnum,
-  MusicTag,
-} from "../types/shorts";
+  SceneInput, RenderConfig, Scene, VideoStatus,
+  MusicMoodEnum, MusicTag, Music } from "../types/shorts";
+
+// speech stats for auto-chunking
+const AVG_SPEECH_RATE = 13; // chars per second
+const TARGET_SEC      = 25; // preferred scene length
+
+// sentence-aware splitter
+function autoChunk(text: string): string[] {
+  const sentences = text.match(/[^.!?]+[.!?]*/g) ?? [text];
+  const out: string[] = [];
+  let current = "";
+
+  for (const s of sentences) {
+    const sec = (current.length + s.length) / AVG_SPEECH_RATE;
+    if (sec > TARGET_SEC && current) { out.push(current.trim()); current = s; }
+    else                             { current += " " + s; }
+  }
+  if (current.trim()) out.push(current.trim());
+  return out;
+}
 
 export class ShortCreator {
-  private queue: {
-    sceneInput: SceneInput[];
-    config: RenderConfig;
-    id: string;
-  }[] = [];
+  private queue: { sceneInput: SceneInput[]; config: RenderConfig; id: string }[] = [];
+
   constructor(
     private config: Config,
     private remotion: Remotion,
@@ -37,160 +48,114 @@ export class ShortCreator {
     private musicManager: MusicManager,
   ) {}
 
+  // ── basic helpers ──────────────────────────────────────────────────────────
   public status(id: string): VideoStatus {
-    const videoPath = this.getVideoPath(id);
-    if (this.queue.find((item) => item.id === id)) {
-      return "processing";
-    }
-    if (fs.existsSync(videoPath)) {
-      return "ready";
-    }
-    return "failed";
+    if (this.queue.find(i => i.id === id)) return "processing";
+    return fs.existsSync(this.getVideoPath(id)) ? "ready" : "failed";
   }
 
   public addToQueue(sceneInput: SceneInput[], config: RenderConfig): string {
-    // todo add mutex lock
     const id = cuid();
-    this.queue.push({
-      sceneInput,
-      config,
-      id,
-    });
-    if (this.queue.length === 1) {
-      this.processQueue();
-    }
+    this.queue.push({ sceneInput, config, id });
+    if (this.queue.length === 1) void this.processQueue();
     return id;
   }
 
   private async processQueue(): Promise<void> {
-    // todo add a semaphore
-    if (this.queue.length === 0) {
-      return;
-    }
+    if (this.queue.length === 0) return;
     const { sceneInput, config, id } = this.queue[0];
-    logger.debug(
-      { sceneInput, config, id },
-      "Processing video item in the queue",
-    );
     try {
       await this.createShort(id, sceneInput, config);
       logger.debug({ id }, "Video created successfully");
-    } catch (error) {
-      logger.error({ error }, "Error creating video");
+    } catch (err) {
+      logger.error({ err }, "Error creating video");
     } finally {
       this.queue.shift();
-      this.processQueue();
+      void this.processQueue();
     }
   }
 
+  // ── main pipeline ──────────────────────────────────────────────────────────
   private async createShort(
     videoId: string,
     inputScenes: SceneInput[],
     config: RenderConfig,
   ): Promise<string> {
-    logger.debug({ videoId, sceneCount: inputScenes.length }, "▶️ createShort");
+
+    // 1️⃣ expand giant paragraphs into 25-s scenes
+    const scenesToRender: SceneInput[] = [];
+    for (const s of inputScenes) {
+      const parts = (s.text.length / AVG_SPEECH_RATE > TARGET_SEC)
+        ? autoChunk(s.text).map(t => ({ text: t, searchTerms: s.searchTerms }))
+        : [s];
+      scenesToRender.push(...parts);
+    }
+    logger.debug({ original: inputScenes.length, expanded: scenesToRender.length },
+                 "Scene list expanded");
+
+    // 2️⃣ process each scene
     const scenes: Scene[] = [];
-    let totalDuration = 0;
-    const excludeVideoIds: string[] = [];
-  
-    for (let index = 0; index < inputScenes.length; index++) {
-      const scene = inputScenes[index];
-  
-      // --- TTS --------------------------------------------------------------
-      logger.debug({ index, textLen: scene.text.length }, "⌛ generating TTS");
-      const { audio: audioBuf, audioLength } =
-        await this.kokoro.generate(scene.text, "af_heart");
-      logger.debug({ index, audioLength }, "✅ TTS ready");
-  
-      // --- Captions ---------------------------------------------------------
-      const tmpPath = path.join(this.config.tempDirPath, `${cuid()}.wav`);
-      await this.ffmpeg.normalizeAudioForWhisper(audioBuf, tmpPath);
-      const captions = await this.whisper.CreateCaption(tmpPath);
-      fs.removeSync(tmpPath);
-      logger.debug({ index, captionWords: captions.length }, "✅ captions ready");
-  
-      // --- Background video -------------------------------------------------
-      const searchDur =
-        audioLength +
-        (index + 1 === inputScenes.length && config.paddingBack
-          ? config.paddingBack / 1000
-          : 0);
-  
-      logger.debug({ index, searchDur }, "🔍 searching Pexels");
+    let totalDur = 0;
+    const usedVideoIds: string[] = [];
+
+    for (const [index, sc] of scenesToRender.entries()) {
+      // -- TTS
+      const { audio: pcm, audioLength } =
+        await this.kokoro.generate(sc.text, "af_heart");
+
+      // -- Captions
+      const tmp = path.join(this.config.tempDirPath, `${cuid()}.wav`);
+      await this.ffmpeg.normalizeAudioForWhisper(pcm, tmp);
+      const captions = await this.whisper.CreateCaption(tmp);
+      fs.removeSync(tmp);
+
+      // -- Video
       const video = await this.pexelsApi.findVideo(
-        scene.searchTerms,
-        searchDur,
-        excludeVideoIds,
+        sc.searchTerms, audioLength, usedVideoIds,
       );
-      excludeVideoIds.push(video.id);
-      logger.debug({ index, videoId: video.id }, "✅ video picked");
-  
-      // --- Assemble scene ---------------------------------------------------
+      usedVideoIds.push(video.id);
+
       scenes.push({
         captions,
         video: video.url,
         audio: {
-          dataUri: await this.ffmpeg.createMp3DataUri(audioBuf),
-          duration: searchDur,
+          dataUri: await this.ffmpeg.createMp3DataUri(pcm),
+          duration: audioLength,
         },
       });
-      totalDuration += searchDur;
+      totalDur += audioLength;
     }
-  
-    if (config.paddingBack) totalDuration += config.paddingBack / 1000;
-  
-    // --- Pick music ---------------------------------------------------------
-    const selectedMusic = this.findMusic(totalDuration, config.music);
-    logger.debug({ selectedMusic, totalDuration }, "🎵 music selected");
-  
-    // --- Render -------------------------------------------------------------
+
+    if (config.paddingBack) totalDur += config.paddingBack / 1000;
+
+    // 3️⃣ music + render
+    const music = this.findMusic(totalDur, config.music);
     await this.remotion.render(
-      {
-        music: selectedMusic,
-        scenes,
-        config: { durationMs: totalDuration * 1000, paddingBack: config.paddingBack },
-      },
+      { music, scenes,
+        config: { durationMs: totalDur * 1000, paddingBack: config.paddingBack } },
       videoId,
     );
     logger.debug({ videoId }, "🏁 render finished");
-  
     return videoId;
   }
-  
 
-  public getVideoPath(videoId: string): string {
-    return path.join(this.config.videosDirPath, `${videoId}.mp4`);
+  // ── file helpers ───────────────────────────────────────────────────────────
+  public getVideoPath(id: string) { return path.join(this.config.videosDirPath, `${id}.mp4`); }
+  public deleteVideo(id: string)  { fs.removeSync(this.getVideoPath(id)); }
+  public getVideo(id: string) {
+    const p = this.getVideoPath(id);
+    if (!fs.existsSync(p)) throw new Error(`Video ${id} not found`);
+    return fs.readFileSync(p);
   }
 
-  public deleteVideo(videoId: string): void {
-    const videoPath = this.getVideoPath(videoId);
-    fs.removeSync(videoPath);
-    logger.debug({ videoId }, "Deleted video file");
+  // ── music helpers ──────────────────────────────────────────────────────────
+  private findMusic(len: number, tag?: MusicMoodEnum): Music {
+    const pool = this.musicManager.musicList().filter(m => !tag || m.mood === tag);
+    return pool[Math.floor(Math.random() * pool.length)];
   }
-
-  public getVideo(videoId: string): Buffer {
-    const videoPath = this.getVideoPath(videoId);
-    if (!fs.existsSync(videoPath)) {
-      throw new Error(`Video ${videoId} not found`);
-    }
-    return fs.readFileSync(videoPath);
-  }
-
-  private findMusic(videoDuration: number, tag?: MusicMoodEnum): Music {
-    const musicFiles = this.musicManager.musicList().filter((music) => {
-      if (tag) {
-        return music.mood === tag;
-      }
-      return true;
-    });
-    return musicFiles[Math.floor(Math.random() * musicFiles.length)];
-  }
-
   public ListAvailableMusicTags(): MusicTag[] {
-    const tags = new Set<MusicTag>();
-    this.musicManager.musicList().forEach((music) => {
-      tags.add(music.mood as MusicTag);
-    });
-    return Array.from(tags.values());
+    const set = new Set<MusicTag>();
+    this.musicManager.musicList().forEach(m => set.add(m.mood as MusicTag));
+    return [...set];
   }
 }
