@@ -88,73 +88,75 @@ export class ShortCreator {
     inputScenes: SceneInput[],
     config: RenderConfig,
   ): Promise<string> {
-    logger.debug(
-      {
-        inputScenes,
-      },
-      "Creating short video",
-    );
+    logger.debug({ videoId, sceneCount: inputScenes.length }, "▶️ createShort");
     const scenes: Scene[] = [];
     let totalDuration = 0;
-    const excludeVideoIds = [];
-
-    let index = 0;
-    for (const scene of inputScenes) {
-      const audio = await this.kokoro.generate(scene.text, "af_heart");
-      let { audioLength } = audio;
-      const { audio: audioStream } = audio;
-
-      // add the paddingBack in seconds to the last scene
-      if (index + 1 === inputScenes.length && config.paddingBack) {
-        audioLength += config.paddingBack / 1000;
-      }
-
-      const tempAudioPath = path.join(this.config.tempDirPath, `${cuid()}.wav`);
-      await this.ffmpeg.normalizeAudioForWhisper(audioStream, tempAudioPath);
-      const captions = await this.whisper.CreateCaption(tempAudioPath);
-      fs.removeSync(tempAudioPath);
-
-      const audioDataUri = await this.ffmpeg.createMp3DataUri(audioStream);
+    const excludeVideoIds: string[] = [];
+  
+    for (let index = 0; index < inputScenes.length; index++) {
+      const scene = inputScenes[index];
+  
+      // --- TTS --------------------------------------------------------------
+      logger.debug({ index, textLen: scene.text.length }, "⌛ generating TTS");
+      const { audio: audioBuf, audioLength } =
+        await this.kokoro.generate(scene.text, "af_heart");
+      logger.debug({ index, audioLength }, "✅ TTS ready");
+  
+      // --- Captions ---------------------------------------------------------
+      const tmpPath = path.join(this.config.tempDirPath, `${cuid()}.wav`);
+      await this.ffmpeg.normalizeAudioForWhisper(audioBuf, tmpPath);
+      const captions = await this.whisper.CreateCaption(tmpPath);
+      fs.removeSync(tmpPath);
+      logger.debug({ index, captionWords: captions.length }, "✅ captions ready");
+  
+      // --- Background video -------------------------------------------------
+      const searchDur =
+        audioLength +
+        (index + 1 === inputScenes.length && config.paddingBack
+          ? config.paddingBack / 1000
+          : 0);
+  
+      logger.debug({ index, searchDur }, "🔍 searching Pexels");
       const video = await this.pexelsApi.findVideo(
         scene.searchTerms,
-        audioLength,
+        searchDur,
         excludeVideoIds,
       );
       excludeVideoIds.push(video.id);
-
+      logger.debug({ index, videoId: video.id }, "✅ video picked");
+  
+      // --- Assemble scene ---------------------------------------------------
       scenes.push({
         captions,
         video: video.url,
         audio: {
-          dataUri: audioDataUri,
-          duration: audioLength,
+          dataUri: await this.ffmpeg.createMp3DataUri(audioBuf),
+          duration: searchDur,
         },
       });
-
-      totalDuration += audioLength;
-      index++;
+      totalDuration += searchDur;
     }
-    if (config.paddingBack) {
-      totalDuration += config.paddingBack / 1000;
-    }
-
+  
+    if (config.paddingBack) totalDuration += config.paddingBack / 1000;
+  
+    // --- Pick music ---------------------------------------------------------
     const selectedMusic = this.findMusic(totalDuration, config.music);
-    logger.debug({ selectedMusic }, "Selected music for the video");
-
+    logger.debug({ selectedMusic, totalDuration }, "🎵 music selected");
+  
+    // --- Render -------------------------------------------------------------
     await this.remotion.render(
       {
         music: selectedMusic,
         scenes,
-        config: {
-          durationMs: totalDuration * 1000,
-          paddingBack: config.paddingBack,
-        },
+        config: { durationMs: totalDuration * 1000, paddingBack: config.paddingBack },
       },
       videoId,
     );
-
+    logger.debug({ videoId }, "🏁 render finished");
+  
     return videoId;
   }
+  
 
   public getVideoPath(videoId: string): string {
     return path.join(this.config.videosDirPath, `${videoId}.mp4`);
