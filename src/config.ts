@@ -3,20 +3,7 @@ import "dotenv/config";
 import os from "os";
 import fs from "fs-extra";
 import pino from "pino";
-
-type whisperModels =
-  | "tiny"
-  | "tiny.en"
-  | "base"
-  | "base.en"
-  | "small"
-  | "small.en"
-  | "medium"
-  | "medium.en"
-  | "large-v1"
-  | "large-v2"
-  | "large-v3"
-  | "large-v3-turbo";
+import { kokoroModelPrecision, whisperModels } from "./types/shorts";
 
 const defaultLogLevel: pino.Level = "info";
 const defaultPort = 3123;
@@ -52,6 +39,7 @@ export class Config {
   public devMode: boolean;
   public whisperVersion: string = whisperVersion;
   public whisperModel: whisperModels = defaultWhisperModel;
+  public kokoroModelPrecision: kokoroModelPrecision = "fp32";
 
   // docker-specific, performance-related settings to prevent memory issues
   public concurrency?: number;
@@ -83,13 +71,22 @@ export class Config {
     this.runningInDocker = process.env.DOCKER === "true";
     this.devMode = process.env.DEV === "true";
 
-    this.whisperModel = (process.env.WHISPER_MODEL ??
-      defaultWhisperModel) as whisperModels;
+    if (process.env.WHISPER_MODEL) {
+      this.whisperModel = process.env.WHISPER_MODEL as whisperModels;
+    }
+    if (process.env.KOKORO_MODEL_PRECISION) {
+      this.kokoroModelPrecision = process.env
+        .KOKORO_MODEL_PRECISION as kokoroModelPrecision;
+    }
 
-    this.concurrency = process.env.CONCURRENCY ? parseInt(process.env.CONCURRENCY) : undefined;
+    this.concurrency = process.env.CONCURRENCY
+      ? parseInt(process.env.CONCURRENCY)
+      : undefined;
 
-    if (process.env.VIDEO_CACHE_SIZE_IN_BYTES) {  
-      this.videoCacheSizeInBytes = parseInt(process.env.VIDEO_CACHE_SIZE_IN_BYTES);
+    if (process.env.VIDEO_CACHE_SIZE_IN_BYTES) {
+      this.videoCacheSizeInBytes = parseInt(
+        process.env.VIDEO_CACHE_SIZE_IN_BYTES,
+      );
     }
   }
 

@@ -1,9 +1,8 @@
 import { KokoroTTS } from "kokoro-js";
-import type { Voices } from "../../types/shorts";
+import type { kokoroModelPrecision, Voices } from "../../types/shorts";
 import { logger } from "../../config";
 
 const MODEL = "onnx-community/Kokoro-82M-v1.0-ONNX";
-const D_TYPE = "fp32"; // Options: "fp32", "fp16", "q8", "q4", "q4f16"
 
 export class Kokoro {
   constructor(private tts: KokoroTTS) {}
@@ -27,9 +26,9 @@ export class Kokoro {
     };
   }
 
-  static async init(): Promise<Kokoro> {
+  static async init(dtype: kokoroModelPrecision): Promise<Kokoro> {
     const tts = await KokoroTTS.from_pretrained(MODEL, {
-      dtype: D_TYPE,
+      dtype,
       device: "cpu", // only "cpu" is supported in node
     });
 
