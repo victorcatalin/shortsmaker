@@ -164,9 +164,9 @@ export class ShortCreator {
         videoId,
       );
 
-      // for (const file of tempFiles) {
-      //   fs.removeSync(file);
-      // }
+      for (const file of tempFiles) {
+        fs.removeSync(file);
+      }
 
       return videoId;
     } catch (error) {

@@ -47,20 +47,9 @@ export const RemotionRoot: React.FC = () => {
           config: {
             durationMs: 4650,
             paddingBack: 1500,
-            captionBackgroundColor: "red",
-            captionPosition: "center",
+            captionBackgroundColor: "blue",
+            captionPosition: "bottom",
           },
-
-          // music: {
-          //   file: "",
-          //   start: 0,
-          //   end: 0,
-          // },
-          // scenes: [],
-          // config: {
-          //   durationMs: 0,
-          //   paddingBack: 0,
-          // },
         }}
         calculateMetadata={calculateMetadata}
       />
