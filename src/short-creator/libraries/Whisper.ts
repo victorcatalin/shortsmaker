@@ -3,7 +3,6 @@ import {
   installWhisperCpp,
   transcribe,
 } from "@remotion/install-whisper-cpp";
-import fs from "fs-extra";
 import path from "path";
 
 import { Config } from "../../config";

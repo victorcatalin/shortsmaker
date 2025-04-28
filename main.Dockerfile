@@ -11,7 +11,7 @@ RUN apt install -y \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /whisper
 RUN git clone https://github.com/ggml-org/whisper.cpp.git .
-RUN git checkout v1.5.5
+RUN git checkout v1.7.1
 RUN make
 WORKDIR /whisper/models
 RUN sh ./download-ggml-model.sh base.en
