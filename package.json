@@ -12,7 +12,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepublishOnly": "npm run build && echo \"#!/usr/bin/env node\n$(cat dist/index.js)\" > dist/index.js && chmod +x dist/index.js",
     "publish:docker:cuda": "docker buildx build --platform linux/amd64 -t gyoridavid/short-video-maker:latest-cuda -t gyoridavid/short-video-maker:${npm_package_version}-cuda -f main-cuda.Dockerfile --push ./",
-    "publish:docker": "docker buildx build --platform linux/amd64,linux/arm64 -t gyoridavid/short-video-maker:latest -t gyoridavid/short-video-maker:${npm_package_version} -f main.Dockerfile --push ./"
+    "publish:docker": "docker buildx build --platform linux/amd64,linux/arm64 -t gyoridavid/short-video-maker:latest -t gyoridavid/short-video-maker:${npm_package_version} -f main.Dockerfile --push ./",
+    "publish:docker:tiny": "docker buildx build --platform linux/amd64,linux/arm64 -t gyoridavid/short-video-maker:latest-tiny -t gyoridavid/short-video-maker:${npm_package_version}-tiny -f main-tiny.Dockerfile --push ./"
   },
   "bin": {
     "short-video-maker": "dist/index.js"
