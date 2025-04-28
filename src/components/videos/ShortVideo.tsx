@@ -26,6 +26,8 @@ export const shortVideoSchema = z.object({
   ),
   config: z.object({
     paddingBack: z.number().optional(),
+    captionPosition: z.enum(["top", "center", "bottom"]).optional(),
+    captionBackgroundColor: z.string().optional(),
     durationMs: z.number(),
   }),
   music: z.object({
@@ -137,13 +139,29 @@ export const ShortVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+
+  const captionBackgroundColor = config.captionBackgroundColor ?? "blue";
+
   const activeStyle = {
-    backgroundColor: "blue",
+    backgroundColor: captionBackgroundColor,
     padding: "10px",
     marginLeft: "-10px",
     marginRight: "-10px",
     borderRadius: "10px",
   };
+
+  const captionPosition = config.captionPosition ?? "center";
+  let captionStyle = {};
+  if (captionPosition === "top") {
+    captionStyle = { top: 100 };
+  }
+  if (captionPosition === "center") {
+    captionStyle = { top: "50%", transform: "translateY(-50%)" };
+  }
+  if (captionPosition === "bottom") {
+    captionStyle = { bottom: 100 };
+  }
+
   return (
     <AbsoluteFill style={{ backgroundColor: "white" }}>
       <Audio
@@ -196,9 +214,9 @@ export const ShortVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
                   <div
                     style={{
                       position: "absolute",
-                      bottom: 100,
-                      left: 10,
+                      left: 0,
                       width: "100%",
+                      ...captionStyle,
                     }}
                   >
                     {page.lines.map((line, k) => {

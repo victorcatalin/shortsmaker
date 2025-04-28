@@ -155,14 +155,18 @@ export class ShortCreator {
           config: {
             durationMs: totalDuration * 1000,
             paddingBack: config.paddingBack,
+            ...{
+              captionBackgroundColor: config.captionBackgroundColor,
+              captionPosition: config.captionPosition,
+            },
           },
         },
         videoId,
       );
 
-      for (const file of tempFiles) {
-        fs.removeSync(file);
-      }
+      // for (const file of tempFiles) {
+      //   fs.removeSync(file);
+      // }
 
       return videoId;
     } catch (error) {

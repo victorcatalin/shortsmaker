@@ -15,6 +15,12 @@ export enum MusicMoodEnum {
   funny = "funny/quirky",
 }
 
+export enum CaptionPositionEnum {
+  top = "top",
+  center = "center",
+  bottom = "bottom",
+}
+
 export type Scene = {
   captions: Caption[];
   video: string;
@@ -39,12 +45,22 @@ export const renderConfig = z.object({
     .number()
     .optional()
     .describe(
-      "For how long the video should be playing after the speech is done, in milliseconds",
+      "For how long the video should be playing after the speech is done, in milliseconds. 1500 is a good value.",
     ),
   music: z
     .nativeEnum(MusicMoodEnum)
     .optional()
     .describe("Music tag to be used to find the right music for the video"),
+  captionPosition: z
+    .nativeEnum(CaptionPositionEnum)
+    .optional()
+    .describe("Position of the caption in the video"),
+  captionBackgroundColor: z
+    .string()
+    .optional()
+    .describe(
+      "Background color of the caption, a valid css color, default is blue",
+    ),
 });
 export type RenderConfig = z.infer<typeof renderConfig>;
 
