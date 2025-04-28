@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Short Video Maker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #007bff;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .form-container {
+      flex: 1;
+      max-width: 650px;
+      background: white;
+      margin: 40px auto;
+      padding: 50px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+
+    .form-container h2 {
+      margin-bottom: 25px;
+      font-size: 22px;
+      color: #333;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    textarea, input, select {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+      transition: all 0.3s;
+      background: #fafafa;
+    }
+
+    textarea:focus, input:focus, select:focus {
+      border-color: #007bff;
+      background: #fff;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      background-color: #28a745;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 15px 10px;
+      font-size: 13px;
+      color: #777;
+      background-color: #f9fafb;
+      margin-top: auto;
+    }
+
+    #response {
+      margin-top: 30px;
+      background: #eef2f5;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .codigma-tag {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 12px;
+      color: #999;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>Short Video Maker</header>
+
+  <div class="form-container">
+    <h2>Create a New Short Video</h2>
+
+    <form id="videoForm">
+      <label for="text">Video Text (Subtitles & Voice)</label>
+      <textarea id="text" rows="4" placeholder="Write the text for the video..." required></textarea>
+
+      <label for="searchTerms">Search Terms (for Pexels)</label>
+      <input type="text" id="searchTerms" placeholder="e.g., night city, cozy home" required>
+
+      <label for="paddingBack">Padding Back (milliseconds)</label>
+      <input type="number" id="paddingBack" value="3000" required>
+
+      <label for="music">Select Background Music</label>
+      <select id="music" required>
+        <option value="chill" selected>Chill</option>
+        <option value="sad">Sad</option>
+        <option value="melancholic">Melancholic</option>
+        <option value="happy">Happy</option>
+        <option value="euphoric/high">Euphoric / High</option>
+        <option value="excited">Excited</option>
+        <option value="uneasy">Uneasy</option>
+        <option value="angry">Angry</option>
+        <option value="dark">Dark</option>
+        <option value="hopeful">Hopeful</option>
+        <option value="contemplative">Contemplative</option>
+        <option value="funny/quirky">Funny / Quirky</option>
+      </select>
+
+      <button type="submit">Generate Video</button>
+    </form>
+
+    <div id="response"></div>
+    <div class="codigma-tag"><a href="https://codigma.io" target="_blank">Codigma.io </a>generated Frontend</div>
+  </div>
+
+  <div class="footer">
+    Mehmet Alp - UI Development | mehmet.alp@rastmobile.com
+  </div>
+
+  <script>
+    const form = document.getElementById('videoForm');
+    const responseDiv = document.getElementById('response');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const text = document.getElementById('text').value.trim();
+      const searchTerms = document.getElementById('searchTerms').value.split(',').map(term => term.trim());
+      const paddingBack = parseInt(document.getElementById('paddingBack').value, 10);
+      const music = document.getElementById('music').value;
+
+      const payload = {
+        scenes: [
+          {
+            text: text,
+            searchTerms: searchTerms
+          }
+        ],
+        config: {
+          paddingBack: paddingBack,
+          music: music
+        }
+      };
+
+      try {
+        const res = await fetch('http://localhost:3123/api/short-video', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        responseDiv.innerText = JSON.stringify(data, null, 2);
+      } catch (error) {
+        responseDiv.innerText = 'Error: ' + error.message;
+      }
+    });
+  </script>
+
+</body>
+</html>
