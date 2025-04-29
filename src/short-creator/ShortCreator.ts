@@ -102,7 +102,10 @@ export class ShortCreator {
 
       let index = 0;
       for (const scene of inputScenes) {
-        const audio = await this.kokoro.generate(scene.text, "af_heart");
+        const audio = await this.kokoro.generate(
+          scene.text,
+          config.voice ?? "af_heart",
+        );
         let { audioLength } = audio;
         const { audio: audioStream } = audio;
 
@@ -155,6 +158,10 @@ export class ShortCreator {
           config: {
             durationMs: totalDuration * 1000,
             paddingBack: config.paddingBack,
+            ...{
+              captionBackgroundColor: config.captionBackgroundColor,
+              captionPosition: config.captionPosition,
+            },
           },
         },
         videoId,
@@ -236,5 +243,9 @@ export class ShortCreator {
     }
 
     return videos;
+  }
+
+  public ListAvailableVoices(): string[] {
+    return this.kokoro.listAvailableVoices();
   }
 }

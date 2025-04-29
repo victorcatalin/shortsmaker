@@ -84,7 +84,7 @@ export class Whisper {
         });
       });
     });
-    logger.debug({ audioPath }, "Captions created");
+    logger.debug({ audioPath, captions }, "Captions created");
     return captions;
   }
 }

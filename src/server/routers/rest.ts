@@ -93,6 +93,10 @@ export class APIRouter {
       },
     );
 
+    this.router.get("/voices", (req: ExpressRequest, res: ExpressResponse) => {
+      res.status(200).json(this.shortCreator.ListAvailableVoices());
+    });
+
     this.router.get(
       "/short-videos",
       (req: ExpressRequest, res: ExpressResponse) => {
