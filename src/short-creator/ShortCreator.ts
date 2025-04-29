@@ -102,7 +102,10 @@ export class ShortCreator {
 
       let index = 0;
       for (const scene of inputScenes) {
-        const audio = await this.kokoro.generate(scene.text, "af_heart");
+        const audio = await this.kokoro.generate(
+          scene.text,
+          config.voice ?? "af_heart",
+        );
         let { audioLength } = audio;
         const { audio: audioStream } = audio;
 
@@ -209,5 +212,9 @@ export class ShortCreator {
       tags.add(music.mood as MusicTag);
     });
     return Array.from(tags.values());
+  }
+
+  public ListAvailableVoices(): string[] {
+    return this.kokoro.listAvailableVoices();
   }
 }

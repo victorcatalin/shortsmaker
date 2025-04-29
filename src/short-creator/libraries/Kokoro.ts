@@ -1,5 +1,9 @@
 import { KokoroTTS } from "kokoro-js";
-import type { kokoroModelPrecision, Voices } from "../../types/shorts";
+import {
+  VoiceEnum,
+  type kokoroModelPrecision,
+  type Voices,
+} from "../../types/shorts";
 import { logger } from "../../config";
 
 const MODEL = "onnx-community/Kokoro-82M-v1.0-ONNX";
@@ -33,5 +37,10 @@ export class Kokoro {
     });
 
     return new Kokoro(tts);
+  }
+
+  listAvailableVoices(): Voices[] {
+    const voices = Object.values(VoiceEnum) as Voices[];
+    return voices;
   }
 }
