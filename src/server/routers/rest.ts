@@ -93,6 +93,16 @@ export class APIRouter {
       },
     );
 
+    this.router.get(
+      "/short-videos",
+      (req: ExpressRequest, res: ExpressResponse) => {
+        const videos = this.shortCreator.listAllVideos();
+        res.status(200).json({
+          videos,
+        });
+      },
+    );
+
     this.router.delete(
       "/short-video/:videoId",
       (req: ExpressRequest, res: ExpressResponse) => {
