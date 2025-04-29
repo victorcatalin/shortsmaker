@@ -12,7 +12,7 @@ const defaultWhisperModel: whisperModels = "medium.en"; // possible options: "ti
 
 // Create the global logger
 export const logger = pino({
-  level: process.env.LOG_LEVEL ?? defaultLogLevel,
+  level: process.env.LOG_LEVEL || defaultLogLevel,
   timestamp: pino.stdTimeFunctions.isoTime,
   formatters: {
     level: (label) => {
@@ -47,7 +47,7 @@ export class Config {
 
   constructor() {
     this.dataDirPath =
-      process.env.DATA_DIR_PATH ??
+      process.env.DATA_DIR_PATH ||
       path.join(os.homedir(), ".ai-agents-az-video-generator");
     this.libsDirPath = path.join(this.dataDirPath, "libs");
 
@@ -65,7 +65,7 @@ export class Config {
     this.musicDirPath = path.join(this.staticDirPath, "music");
 
     this.pexelsApiKey = process.env.PEXELS_API_KEY as string;
-    this.logLevel = (process.env.LOG_LEVEL ?? defaultLogLevel) as pino.Level;
+    this.logLevel = (process.env.LOG_LEVEL || defaultLogLevel) as pino.Level;
     this.whisperVerbose = process.env.WHISPER_VERBOSE === "true";
     this.port = process.env.PORT ? parseInt(process.env.PORT) : defaultPort;
     this.runningInDocker = process.env.DOCKER === "true";
