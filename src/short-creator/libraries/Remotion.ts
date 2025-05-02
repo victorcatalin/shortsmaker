@@ -48,27 +48,18 @@ export class Remotion {
 
     const outputLocation = path.join(this.config.videosDirPath, `${id}.mp4`);
 
-    const onProgress = (() => {
-      let progress = 0;
-      return ({ progress: newProgress }: { progress: number }) => {
-        newProgress = Math.floor(newProgress * 100);
-        if (newProgress > progress) {
-          logger.debug(`Rendering ${id} ${newProgress}% complete`);
-          progress = newProgress;
-        }
-      };
-    })();
-
     await renderMedia({
       codec: "h264",
       composition,
       serveUrl: this.bundled,
       outputLocation,
-      chromiumOptions: {
-        enableMultiProcessOnLinux: true,
-      },
       inputProps: data,
-      onProgress,
+      onProgress: ({progress}) => {
+        logger.debug(`Rendering ${id} ${Math.floor(progress * 100)}% complete`);
+      },
+      // preventing memory issues with docker
+      concurrency: this.config.concurrency,
+      offthreadVideoCacheSizeInBytes: this.config.videoCacheSizeInBytes,
     });
 
     logger.debug(

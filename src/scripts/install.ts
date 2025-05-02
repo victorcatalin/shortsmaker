@@ -12,7 +12,7 @@ export async function install() {
 
   logger.info("Installing dependencies...");
   logger.info("Installing Kokoro...");
-  await Kokoro.init();
+  await Kokoro.init(config.kokoroModelPrecision);
   logger.info("Installing browser shell...");
   await ensureBrowser();
   logger.info("Installing whisper.cpp");

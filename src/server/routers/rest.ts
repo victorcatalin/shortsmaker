@@ -3,16 +3,22 @@ import type {
   Request as ExpressRequest,
   Response as ExpressResponse,
 } from "express";
+import fs from "fs-extra";
+import path from "path";
 
 import { validateCreateShortInput } from "../validator";
 import { ShortCreator } from "../../short-creator/ShortCreator";
 import { logger } from "../../logger";
+import { Config } from "../../config";
 
 // todo abstract class
 export class APIRouter {
-  router: express.Router;
-  shortCreator: ShortCreator;
-  constructor(shortCreator: ShortCreator) {
+  public router: express.Router;
+  private shortCreator: ShortCreator;
+  private config: Config;
+
+  constructor(config: Config, shortCreator: ShortCreator) {
+    this.config = config;
     this.router = express.Router();
     this.shortCreator = shortCreator;
 
@@ -87,6 +93,10 @@ export class APIRouter {
       },
     );
 
+    this.router.get("/voices", (req: ExpressRequest, res: ExpressResponse) => {
+      res.status(200).json(this.shortCreator.ListAvailableVoices());
+    });
+
     this.router.delete(
       "/short-video/:videoId",
       (req: ExpressRequest, res: ExpressResponse) => {
@@ -101,6 +111,36 @@ export class APIRouter {
         res.status(200).json({
           success: true,
         });
+      },
+    );
+
+    this.router.get(
+      "/tmp/:tmpFile",
+      (req: ExpressRequest, res: ExpressResponse) => {
+        const { tmpFile } = req.params;
+        if (!tmpFile) {
+          res.status(400).json({
+            error: "tmpFile is required",
+          });
+          return;
+        }
+        const tmpFilePath = path.join(this.config.tempDirPath, tmpFile);
+        if (!fs.existsSync(tmpFilePath)) {
+          res.status(404).json({
+            error: "tmpFile not found",
+          });
+          return;
+        }
+        const tmpFileBuffer = fs.readFileSync(tmpFilePath);
+
+        if (tmpFile.endsWith(".mp3")) {
+          res.setHeader("Content-Type", "audio/mpeg");
+        }
+        if (tmpFile.endsWith(".wav")) {
+          res.setHeader("Content-Type", "audio/wav");
+        }
+
+        res.send(tmpFileBuffer);
       },
     );
 

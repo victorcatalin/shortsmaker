@@ -3,29 +3,16 @@ import "dotenv/config";
 import os from "os";
 import fs from "fs-extra";
 import pino from "pino";
-
-type whisperModels =
-  | "tiny"
-  | "tiny.en"
-  | "base"
-  | "base.en"
-  | "small"
-  | "small.en"
-  | "medium"
-  | "medium.en"
-  | "large-v1"
-  | "large-v2"
-  | "large-v3"
-  | "large-v3-turbo";
+import { kokoroModelPrecision, whisperModels } from "./types/shorts";
 
 const defaultLogLevel: pino.Level = "info";
 const defaultPort = 3123;
 const whisperVersion = "1.7.1";
-const whisperModel: whisperModels = "medium.en"; // possible options: "tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo"
+const defaultWhisperModel: whisperModels = "medium.en"; // possible options: "tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo"
 
 // Create the global logger
 export const logger = pino({
-  level: process.env.LOG_LEVEL ?? defaultLogLevel,
+  level: process.env.LOG_LEVEL || defaultLogLevel,
   timestamp: pino.stdTimeFunctions.isoTime,
   formatters: {
     level: (label) => {
@@ -51,15 +38,20 @@ export class Config {
   public runningInDocker: boolean;
   public devMode: boolean;
   public whisperVersion: string = whisperVersion;
-  public whisperModel: whisperModels = whisperModel;
+  public whisperModel: whisperModels = defaultWhisperModel;
+  public kokoroModelPrecision: kokoroModelPrecision = "fp32";
+
+  // docker-specific, performance-related settings to prevent memory issues
+  public concurrency?: number;
+  public videoCacheSizeInBytes: number | null = null;
 
   constructor() {
     this.dataDirPath =
-      process.env.DATA_DIR_PATH ??
+      process.env.DATA_DIR_PATH ||
       path.join(os.homedir(), ".ai-agents-az-video-generator");
     this.libsDirPath = path.join(this.dataDirPath, "libs");
 
-    this.whisperInstallPath = path.join(this.libsDirPath, "whisper.cpp");
+    this.whisperInstallPath = path.join(this.libsDirPath, "whisper");
     this.videosDirPath = path.join(this.dataDirPath, "videos");
     this.tempDirPath = path.join(this.dataDirPath, "temp");
 
@@ -73,11 +65,29 @@ export class Config {
     this.musicDirPath = path.join(this.staticDirPath, "music");
 
     this.pexelsApiKey = process.env.PEXELS_API_KEY as string;
-    this.logLevel = (process.env.LOG_LEVEL ?? defaultLogLevel) as pino.Level;
+    this.logLevel = (process.env.LOG_LEVEL || defaultLogLevel) as pino.Level;
     this.whisperVerbose = process.env.WHISPER_VERBOSE === "true";
     this.port = process.env.PORT ? parseInt(process.env.PORT) : defaultPort;
     this.runningInDocker = process.env.DOCKER === "true";
     this.devMode = process.env.DEV === "true";
+
+    if (process.env.WHISPER_MODEL) {
+      this.whisperModel = process.env.WHISPER_MODEL as whisperModels;
+    }
+    if (process.env.KOKORO_MODEL_PRECISION) {
+      this.kokoroModelPrecision = process.env
+        .KOKORO_MODEL_PRECISION as kokoroModelPrecision;
+    }
+
+    this.concurrency = process.env.CONCURRENCY
+      ? parseInt(process.env.CONCURRENCY)
+      : undefined;
+
+    if (process.env.VIDEO_CACHE_SIZE_IN_BYTES) {
+      this.videoCacheSizeInBytes = parseInt(
+        process.env.VIDEO_CACHE_SIZE_IN_BYTES,
+      );
+    }
   }
 
   public ensureConfig() {

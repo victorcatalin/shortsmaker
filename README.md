@@ -1,4 +1,4 @@
-# Shorts Video Maker
+# Short Video Maker
 
 An open source automated video creation tool for generating short-form video content. Short Video Maker combines text-to-speech, automatic captions, background videos, and music to create engaging short videos from simple text inputs.
 
@@ -7,7 +7,14 @@ This repository was open-sourced by the [AI Agents A-Z Youtube Channel](https://
 ## Hardware requirements
 
 - CPU: at least 2 cores are recommended
+- RAM: at least 2 GB is required, but 4 GB is recommended. when using docker, you can limit the memory usage with the `CONCURRENCY` environment variable (see below)
 - GPU: optional, makes the caption generation a lot faster (whisper.cpp) and the video rendering somewhat faster
+
+## Software requirements
+
+When running with npx
+- ffmpeg
+- build-essential, git, cmake, wget to build Whisper.cpp
 
 ## Watch the official video on how to generate videos with n8n
 
@@ -25,7 +32,14 @@ LOG_LEVEL=debug PEXELS_API_KEY= npx short-video-maker
 
 ### Using Docker
 
+> [!IMPORTANT]
+> To avoid memory issues, I had to limit the number of concurrent Chrome tabs used for rendering to 1 for both images. If you have more RAM, feel free to experiment with the sweet spot for your machine/VPS.
+
 #### CPU image
+
+To increase the performance, I've set the Whisper model to `base.en` for both Docker images. This model is smaller and faster than the `medium.en` model, however it is somewhat less accurate.
+
+With 2 vCPUs it takes ~7 seconds for Kokoro to generate 10 seconds of audio, and ~2 seconds for Whisper to generate the captions for a scene.
 
 ```bash
 docker run -it --rm --name short-video-maker -p 3123:3123 \
@@ -34,6 +48,7 @@ docker run -it --rm --name short-video-maker -p 3123:3123 \
 ```
 
 #### NVIDIA GPUs
+
 ```bash
 docker run -it --rm --name shorts-video-maker -p 3123:3123 \
   -e PEXELS_API_KEY= --gpus=all \
@@ -46,12 +61,14 @@ Join our [Discord](https://discord.gg/G7FJVJQ6RE) community for support and disc
 
 ## Environment Variables
 
-| Variable        | Description                                                                        |
-| --------------- | ---------------------------------------------------------------------------------- |
-| PEXELS_API_KEY  | Your Pexels API key for background video sourcing                                  |
-| PORT            | Port for the API/MCP server (default: 3123)                                        |
-| LOG_LEVEL       | Log level for the server (default: info, options: trace, debug, info, warn, error) |
-| WHISPER_VERBOSE | Verbose mode for Whisper (default: false)                                          |
+| Variable                  | Description                                                                                                                                                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PEXELS_API_KEY            | Your Pexels API key for background video sourcing                                                                                                                                                                |
+| PORT                      | Port for the API/MCP server (default: 3123)                                                                                                                                                                      |
+| LOG_LEVEL                 | Log level for the server (default: info, options: trace, debug, info, warn, error)                                                                                                                               |
+| WHISPER_VERBOSE           | Verbose mode for Whisper (default: false)                                                                                                                                                                        |
+| CONCURRENCY               | [Number of Chrome tabs to use to render the video.](https://www.remotion.dev/docs/terminology/concurrency) Used to limit the memory usage in the Docker containers (default: undefined)                          |
+| VIDEO_CACHE_SIZE_IN_BYTES | [cache for <OffthreadVideo> frames](https://www.remotion.dev/docs/renderer/select-composition#offthreadvideocachesizeinbytes) - used to prevent memory related crashes in the Docker images (default: undefined) |
 
 ## Example
 
@@ -121,8 +138,11 @@ See the [CONTRIBUTING.md](CONTRIBUTING.md) file for instructions on setting up a
 
 The following REST endpoints are available:
 
-1. `GET /api/video/:id` - Get a video by ID
-2. `POST /api/video` - Create a new video
+1. `GET /api/short-video/:id` - Get a video by ID and also can be downloaded like this :
+
+`curl -o output.mp4 http://localhost:3123/api/short-video/<videoId>   `
+
+3. `POST /api/short-video` - Create a new video
    ```json
    {
      "scenes": [
@@ -137,8 +157,8 @@ The following REST endpoints are available:
      }
    }
    ```
-3. `DELETE /api/video/:id` - Delete a video by ID
-4. `GET /api/music-tags` - Get available music tags
+4. `DELETE /api/short-video/:id` - Delete a video by ID
+5. `GET /api/music-tags` - Get available music tags
 
 ### Model Context Protocol (MCP)
 

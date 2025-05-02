@@ -1,38 +1,22 @@
-ARG UBUNTU_VERSION=22.04
-ARG CUDA_VERSION=12.3.1
-ARG BASE_CUDA_DEV_CONTAINER=nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION}
-ARG BASE_CUDA_RUN_CONTAINER=nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION}
-
-# Ref: https://github.com/ggml-org/whisper.cpp
-FROM ${BASE_CUDA_DEV_CONTAINER} AS install-whisper
+FROM ubuntu:22.04 AS install-whisper
 ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && \
-    apt-get install --fix-missing --no-install-recommends -y bash git make vim wget g++ ffmpeg curl
-
-WORKDIR /app/data/libs/whisper
-RUN git clone https://github.com/ggerganov/whisper.cpp.git -b v1.7.1 --depth 1 .
-
-RUN make clean
-RUN GGML_CUDA=1 make -j
-
-RUN sh ./models/download-ggml-model.sh medium.en
-
-FROM ${BASE_CUDA_RUN_CONTAINER} AS base
-
-# install node
-RUN apt-get update && apt-get install -y \
-    curl \
-    ca-certificates \
-    gnupg \
-    lsb-release \
+RUN apt update
+# whisper install dependencies
+RUN apt install -y \
+    git \
+    build-essential \
+    wget \
+    cmake \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get update && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
-RUN node -v && npm -v
+WORKDIR /whisper
+RUN git clone https://github.com/ggml-org/whisper.cpp.git .
+RUN git checkout v1.7.1
+RUN make
+WORKDIR /whisper/models
+RUN sh ./download-ggml-model.sh tiny.en
 
-# install dependencies
+FROM node:22-bookworm-slim AS base
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 RUN apt update
@@ -43,8 +27,8 @@ RUN apt install -y \
       cmake \
       ffmpeg \
       curl \
-      build-essential \
       make \
+      libsdl2-dev \
       # remotion dependencies
       libnss3 \
       libdbus-1-3 \
@@ -81,7 +65,7 @@ RUN pnpm build
 
 FROM base
 COPY static /app/static
-COPY --from=install-whisper /app/data/libs/whisper /app/data/libs/whisper
+COPY --from=install-whisper /whisper /app/data/libs/whisper
 COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=build /app/dist /app/dist
 COPY package.json /app/
@@ -89,6 +73,8 @@ COPY package.json /app/
 # app configuration via environment variables
 ENV DATA_DIR_PATH=/app/data
 ENV DOCKER=true
+ENV WHISPER_MODEL=tiny.en
+ENV KOKORO_MODEL_PRECISION=q4
 # number of chrome tabs to use for rendering
 ENV CONCURRENCY=1
 # video cache - 100MB

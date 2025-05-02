@@ -38,7 +38,7 @@ async function main() {
   logger.debug("initializing remotion");
   const remotion = await Remotion.init(config);
   logger.debug("initializing kokoro");
-  const kokoro = await Kokoro.init();
+  const kokoro = await Kokoro.init(config.kokoroModelPrecision);
   logger.debug("initializing whisper");
   const whisper = await Whisper.init(config);
   logger.debug("initializing ffmpeg");
@@ -57,7 +57,7 @@ async function main() {
   );
 
   logger.debug("initializing the server");
-  const server = new Server(config.port, shortCreator);
+  const server = new Server(config, shortCreator);
   const app = server.start();
 
   // todo add shutdown handler

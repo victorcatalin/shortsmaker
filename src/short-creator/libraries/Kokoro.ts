@@ -1,10 +1,13 @@
 import { KokoroTTS, TextSplitterStream } from "kokoro-js";
-import type { Voices } from "../../types/shorts";
-import { logger } from "../../logger";
+import {
+  VoiceEnum,
+  type kokoroModelPrecision,
+  type Voices,
+} from "../../types/shorts";
+import { logger } from "../../config";
 
-const MODEL  = "onnx-community/Kokoro-82M-v1.0-ONNX";
-const DTYPE  = "fp32"; // Options: "fp32", "fp16", "q8", "q4", "q4f16"
-
+const MODEL = "onnx-community/Kokoro-82M-v1.0-ONNX";
+const DTYPE = "fp32"; // Options: "fp32", "fp16", "q8", "q4", "q4f16"
 
 export class Kokoro {
   constructor(private readonly tts: KokoroTTS) {}
@@ -18,6 +21,7 @@ export class Kokoro {
     logger.debug({ chars: text.length, voice, chunkSize }, "▶️ Kokoro.generate");
 
     // 1️⃣ splitter + stream
+    logger.debug({ text, voice }, "Generating audio with Kokoro");
     const splitter = new TextSplitterStream();
     const stream   = this.tts.stream(splitter, { voice });
 
@@ -38,6 +42,7 @@ export class Kokoro {
     const pcm = Float32Array.from(bufs.flatMap(b => Array.from(b)));
     const len = pcm.length / sr;
     logger.debug({ chunks: i, audioLength: len }, "✅ Kokoro finished");
+    logger.debug({ text, voice }, "Audio generated with Kokoro");
 
     return {
       audio: float32ToWav(pcm, sr),
@@ -45,9 +50,17 @@ export class Kokoro {
     };
   }
 
-  static async init() {
-    const tts = await KokoroTTS.from_pretrained(MODEL, { dtype: DTYPE, device: "cpu" });
+  static async init(dtype: kokoroModelPrecision): Promise<Kokoro> {
+    const tts = await KokoroTTS.from_pretrained(MODEL, {
+      dtype,
+      device: "cpu", // only "cpu" is supported in node
+    });
     return new Kokoro(tts);
+  }
+
+  listAvailableVoices(): Voices[] {
+    const voices = Object.values(VoiceEnum) as Voices[];
+    return voices;
   }
 }
 

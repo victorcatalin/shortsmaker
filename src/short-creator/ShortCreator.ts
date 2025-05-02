@@ -81,7 +81,6 @@ export class ShortCreator {
     inputScenes: SceneInput[],
     config: RenderConfig,
   ): Promise<string> {
-
     // 1️⃣ expand giant paragraphs into 25-s scenes
     const scenesToRender: SceneInput[] = [];
     for (const s of inputScenes) {
@@ -93,50 +92,91 @@ export class ShortCreator {
     logger.debug({ original: inputScenes.length, expanded: scenesToRender.length },
                  "Scene list expanded");
 
-    // 2️⃣ process each scene
-    const scenes: Scene[] = [];
-    let totalDur = 0;
-    const usedVideoIds: string[] = [];
+    try {
+      logger.debug(
+        {
+          inputScenes,
+        },
+        "Creating short video",
+      );
+      const scenes: Scene[] = [];
+      let totalDuration = 0;
+      const excludeVideoIds = [];
+      const tempFiles = [];
 
-    for (const [index, sc] of scenesToRender.entries()) {
+      for (const [index, sc] of scenesToRender.entries()) {
       // -- TTS
-      const { audio: pcm, audioLength } =
-        await this.kokoro.generate(sc.text, "af_heart");
+        const { audio: pcm, audioLength } =
+        await this.kokoro.generate(sc.text,
+          config.voice ?? "af_heart",);
 
-      // -- Captions
-      const tmp = path.join(this.config.tempDirPath, `${cuid()}.wav`);
+        // -- Captions
+        const tmp = path.join(this.config.tempDirPath, `${cuid()}.wav`);
       await this.ffmpeg.normalizeAudioForWhisper(pcm, tmp);
-      const captions = await this.whisper.CreateCaption(tmp);
+        const captions = await this.whisper.CreateCaption(tmp);
       fs.removeSync(tmp);
 
-      // -- Video
+      const tempId = cuid();
+      const tempWavFileName = `${tempId}.wav`;
+      const tempMp3FileName = `${tempId}.mp3`;
+      const tempWavPath = path.join(this.config.tempDirPath, tempWavFileName);
+      const tempMp3Path = path.join(this.config.tempDirPath, tempMp3FileName);
+      tempFiles.push(tempWavPath, tempMp3Path);
+
+      await this.ffmpeg.saveNormalizedAudio(audioStream, tempWavPath);
+      const captions = await this.whisper.CreateCaption(tempWavPath);
+
+      await this.ffmpeg.saveToMp3(audioStream, tempMp3Path);
       const video = await this.pexelsApi.findVideo(
-        sc.searchTerms, audioLength, usedVideoIds,
+        scene.searchTerms,
+        audioLength,
+        excludeVideoIds,
       );
-      usedVideoIds.push(video.id);
+      excludeVideoIds.push(video.id);
 
-      scenes.push({
-        captions,
-        video: video.url,
-        audio: {
-          dataUri: await this.ffmpeg.createMp3DataUri(pcm),
-          duration: audioLength,
+        scenes.push({
+          captions,
+          video: video.url,
+          audio: {
+            url: `http://localhost:${this.config.port}/api/tmp/${tempMp3FileName}`,
+            duration: audioLength,
+          },
+        });
+
+        totalDuration += audioLength;
+        index++;
+      }
+      if (config.paddingBack) {
+        totalDuration += config.paddingBack / 1000;
+      }
+
+      if (config.paddingBack) totalDur += config.paddingBack / 1000;
+
+      await this.remotion.render(
+        {
+          music: selectedMusic,
+          scenes,
+          config: {
+            durationMs: totalDuration * 1000,
+            paddingBack: config.paddingBack,
+            ...{
+              captionBackgroundColor: config.captionBackgroundColor,
+              captionPosition: config.captionPosition,
+            },
+          },
         },
-      });
-      totalDur += audioLength;
+        videoId,
+      );
+
+      for (const file of tempFiles) {
+        fs.removeSync(file);
+      }
+
+      return videoId;
+    } catch (error) {
+      logger.error({ error: error }, "Error creating short video");
+      throw error;
     }
-
-    if (config.paddingBack) totalDur += config.paddingBack / 1000;
-
-    // 3️⃣ music + render
-    const music = this.findMusic(totalDur, config.music);
-    await this.remotion.render(
-      { music, scenes,
-        config: { durationMs: totalDur * 1000, paddingBack: config.paddingBack } },
-      videoId,
-    );
-    logger.debug({ videoId }, "🏁 render finished");
-    return videoId;
   }
 
   // ── file helpers ───────────────────────────────────────────────────────────
@@ -157,5 +197,9 @@ export class ShortCreator {
     const set = new Set<MusicTag>();
     this.musicManager.musicList().forEach(m => set.add(m.mood as MusicTag));
     return [...set];
+  }
+
+  public ListAvailableVoices(): string[] {
+    return this.kokoro.listAvailableVoices();
   }
 }
