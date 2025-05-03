@@ -95,9 +95,16 @@ export class PexelsAPI {
       throw new Error("No videos found");
     }
 
-    return filteredVideos[
+    const video = filteredVideos[
       Math.floor(Math.random() * filteredVideos.length)
     ] as Video;
+
+    logger.debug(
+      { searchTerm, video: video, minDurationSeconds },
+      "Found video from Pexels API",
+    );
+
+    return video;
   }
 
   async findVideo(
