@@ -209,6 +209,37 @@ export class ShortCreator {
     return Array.from(tags.values());
   }
 
+  public listAllVideos(): { id: string; status: VideoStatus }[] {
+    const videos: { id: string; status: VideoStatus }[] = [];
+
+    // Check if videos directory exists
+    if (!fs.existsSync(this.config.videosDirPath)) {
+      return videos;
+    }
+
+    // Read all files in the videos directory
+    const files = fs.readdirSync(this.config.videosDirPath);
+
+    // Filter for MP4 files and extract video IDs
+    for (const file of files) {
+      if (file.endsWith('.mp4')) {
+        const videoId = file.replace('.mp4', '');
+        const status = this.status(videoId);
+        videos.push({ id: videoId, status });
+      }
+    }
+
+    // Add videos that are in the queue but not yet rendered
+    for (const queueItem of this.queue) {
+      const existingVideo = videos.find(v => v.id === queueItem.id);
+      if (!existingVideo) {
+        videos.push({ id: queueItem.id, status: 'processing' });
+      }
+    }
+
+    return videos;
+  }
+
   public ListAvailableVoices(): string[] {
     return this.kokoro.listAvailableVoices();
   }

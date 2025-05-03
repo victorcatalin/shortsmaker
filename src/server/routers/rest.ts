@@ -97,6 +97,16 @@ export class APIRouter {
       res.status(200).json(this.shortCreator.ListAvailableVoices());
     });
 
+    this.router.get(
+      "/short-videos",
+      (req: ExpressRequest, res: ExpressResponse) => {
+        const videos = this.shortCreator.listAllVideos();
+        res.status(200).json({
+          videos,
+        });
+      },
+    );
+
     this.router.delete(
       "/short-video/:videoId",
       (req: ExpressRequest, res: ExpressResponse) => {
