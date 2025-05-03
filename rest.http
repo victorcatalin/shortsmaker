@@ -30,6 +30,12 @@ Accept: application/json
 
 ###
 
+# @name list_of_videos
+GET {{host}}/api/short-videos HTTP/1.1
+Accept: application/json
+
+###
+
 # @name delete_video
 DELETE {{host}}/api/short-video/{{videoId}} HTTP/1.1
 Accept: application/json

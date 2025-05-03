@@ -222,18 +222,24 @@ export class ShortCreator {
 
     // Filter for MP4 files and extract video IDs
     for (const file of files) {
-      if (file.endsWith('.mp4')) {
-        const videoId = file.replace('.mp4', '');
-        const status = this.status(videoId);
+      if (file.endsWith(".mp4")) {
+        const videoId = file.replace(".mp4", "");
+
+        let status: VideoStatus = "ready";
+        const inQueue = this.queue.find((item) => item.id === videoId);
+        if (inQueue) {
+          status = "processing";
+        }
+
         videos.push({ id: videoId, status });
       }
     }
 
     // Add videos that are in the queue but not yet rendered
     for (const queueItem of this.queue) {
-      const existingVideo = videos.find(v => v.id === queueItem.id);
+      const existingVideo = videos.find((v) => v.id === queueItem.id);
       if (!existingVideo) {
-        videos.push({ id: queueItem.id, status: 'processing' });
+        videos.push({ id: queueItem.id, status: "processing" });
       }
     }
 

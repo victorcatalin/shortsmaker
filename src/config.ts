@@ -98,3 +98,5 @@ export class Config {
     }
   }
 }
+
+export const KOKORO_MODEL = "onnx-community/Kokoro-82M-v1.0-ONNX";
