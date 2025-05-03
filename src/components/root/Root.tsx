@@ -53,6 +53,42 @@ export const RemotionRoot: React.FC = () => {
         }}
         calculateMetadata={calculateMetadata}
       />
+      <Composition
+        id="LandscapeVideo"
+        component={ShortVideo}
+        durationInFrames={30}
+        fps={FPS}
+        width={1920}
+        height={1080}
+        defaultProps={{
+          music: {
+            file: "mellow-smooth-rap-beat-20230107-132480.mp3",
+            start: 0,
+            end: 175,
+          },
+          scenes: [
+            {
+              captions: [
+                { text: " Hello", startMs: 390, endMs: 990 },
+                { text: " World.", startMs: 990, endMs: 2000 },
+              ],
+              video:
+                "https://videos.pexels.com/video-files/1168989/1168989-hd_1920_1080_30fps.mp4",
+              audio: {
+                url: "http://localhost:3123/api/tmp/cma1lgean0001rlsi52b8h3n3.mp3",
+                duration: 3.15,
+              },
+            },
+          ],
+          config: {
+            durationMs: 4650,
+            paddingBack: 1500,
+            captionBackgroundColor: "blue",
+            captionPosition: "bottom",
+          },
+        }}
+        calculateMetadata={calculateMetadata}
+      />
     </>
   );
 };

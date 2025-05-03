@@ -7,6 +7,8 @@ const durationBufferSeconds = 3;
 const defaultTimeoutMs = 5000;
 const retryTimes = 3;
 
+type Orientation = "portrait" | "landscape";
+
 export class PexelsAPI {
   constructor(private API_KEY: string) {}
 
@@ -14,19 +16,20 @@ export class PexelsAPI {
     searchTerm: string,
     minDurationSeconds: number,
     excludeIds: string[],
+    orientation: Orientation,
     timeout: number,
   ): Promise<Video> {
     if (!this.API_KEY) {
       throw new Error("API key not set");
     }
     logger.debug(
-      { searchTerm, minDurationSeconds },
+      { searchTerm, minDurationSeconds, orientation },
       "Searching for video in Pexels API",
     );
     const headers = new Headers();
     headers.append("Authorization", this.API_KEY);
     const response = await fetch(
-      `https://api.pexels.com/videos/search?orientation=portrait&size=medium&per_page=80&query=${encodeURIComponent(searchTerm)}`,
+      `https://api.pexels.com/videos/search?orientation=${orientation}&size=medium&per_page=80&query=${encodeURIComponent(searchTerm)}`,
       {
         method: "GET",
         headers,
@@ -52,8 +55,14 @@ export class PexelsAPI {
       }[];
     }[];
 
+    const requiredVideoWidth = orientation === "portrait" ? 1080 : 1920;
+    const requiredVideoHeight = orientation === "portrait" ? 1920 : 1080;
+
     if (!videos || videos.length === 0) {
-      logger.error({ searchTerm }, "No videos found in Pexels API");
+      logger.error(
+        { searchTerm, orientation },
+        "No videos found in Pexels API",
+      );
       throw new Error("No videos found");
     }
 
@@ -76,8 +85,8 @@ export class PexelsAPI {
           for (const file of video.video_files) {
             if (
               file.quality === "hd" &&
-              file.width === 1080 &&
-              file.height === 1920
+              file.width === requiredVideoWidth &&
+              file.height === requiredVideoHeight
             ) {
               return {
                 id: video.id,
@@ -100,7 +109,7 @@ export class PexelsAPI {
     ] as Video;
 
     logger.debug(
-      { searchTerm, video: video, minDurationSeconds },
+      { searchTerm, video: video, minDurationSeconds, orientation },
       "Found video from Pexels API",
     );
 
@@ -111,6 +120,7 @@ export class PexelsAPI {
     searchTerms: string[],
     minDurationSeconds: number,
     excludeIds: string[],
+    orientation: Orientation = "portrait",
     timeout: number = defaultTimeoutMs,
     retryCounter: number = 0,
   ): Promise<Video> {
@@ -124,6 +134,7 @@ export class PexelsAPI {
           searchTerm,
           minDurationSeconds,
           excludeIds,
+          orientation,
           timeout,
         );
       } catch (error: unknown) {
@@ -141,6 +152,7 @@ export class PexelsAPI {
               searchTerms,
               minDurationSeconds,
               excludeIds,
+              orientation,
               timeout,
               retryCounter + 1,
             );

@@ -19,6 +19,7 @@ import type {
   VideoStatus,
   MusicMoodEnum,
   MusicTag,
+  OrientationEnum,
 } from "../types/shorts";
 
 export class ShortCreator {
@@ -91,6 +92,7 @@ export class ShortCreator {
     logger.debug(
       {
         inputScenes,
+        config,
       },
       "Creating short video",
     );
@@ -98,6 +100,9 @@ export class ShortCreator {
     let totalDuration = 0;
     const excludeVideoIds = [];
     const tempFiles = [];
+
+    const orientation: OrientationEnum =
+      config.orientation ?? ("portrait" as OrientationEnum);
 
     let index = 0;
     for (const scene of inputScenes) {
@@ -128,6 +133,7 @@ export class ShortCreator {
         scene.searchTerms,
         audioLength,
         excludeVideoIds,
+        "landscape",
       );
       excludeVideoIds.push(video.id);
 
@@ -164,6 +170,7 @@ export class ShortCreator {
         },
       },
       videoId,
+      orientation,
     );
 
     for (const file of tempFiles) {

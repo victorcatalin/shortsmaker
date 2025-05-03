@@ -71,6 +71,12 @@ export enum VoiceEnum {
   bm_fable = "bm_fable",
 }
 
+export enum OrientationEnum {
+  landscape = "landscape",
+  portrait = "portrait",
+  // square = "square",
+}
+
 export const renderConfig = z.object({
   paddingBack: z
     .number()
@@ -96,6 +102,10 @@ export const renderConfig = z.object({
     .nativeEnum(VoiceEnum)
     .optional()
     .describe("Voice to be used for the speech, default is af_heart"),
+  orientation: z
+    .nativeEnum(OrientationEnum)
+    .optional()
+    .describe("Orientation of the video, default is portrait"),
 });
 export type RenderConfig = z.infer<typeof renderConfig>;
 

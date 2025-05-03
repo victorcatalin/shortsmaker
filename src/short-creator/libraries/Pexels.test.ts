@@ -28,7 +28,7 @@ test("should time out", async () => {
     .reply(200, {});
   expect(async () => {
     const pexels = new PexelsAPI("asdf");
-    await pexels.findVideo(["dog"], 2.4, [], 100);
+    await pexels.findVideo(["dog"], 2.4, [], "portrait", 100);
   }).rejects.toThrow(
     expect.objectContaining({
       name: "TimeoutError",
