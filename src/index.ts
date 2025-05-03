@@ -15,14 +15,7 @@ async function main() {
   try {
     config.ensureConfig();
   } catch (err: unknown) {
-    if (err instanceof Error) {
-      logger.error(err.message, "Error in config");
-    } else if (typeof err === "string") {
-      logger.error(err, "Error in config");
-    } else {
-      logger.error("Unknown error", "Error in config");
-    }
-
+    logger.error(err, "Error in config");
     process.exit(1);
   }
 
@@ -30,8 +23,8 @@ async function main() {
   try {
     logger.debug("checking music files");
     musicManager.ensureMusicFilesExist();
-  } catch (err) {
-    logger.error(err, "Missing music files");
+  } catch (error: unknown) {
+    logger.error(error, "Missing music files");
     process.exit(1);
   }
 
@@ -63,6 +56,6 @@ async function main() {
   // todo add shutdown handler
 }
 
-main().catch((err) => {
-  logger.error(err, "Error starting server");
+main().catch((error: unknown) => {
+  logger.error(error, "Error starting server");
 });

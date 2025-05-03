@@ -42,20 +42,20 @@ export class APIRouter {
           res.status(201).json({
             videoId,
           });
-        } catch (err: unknown) {
-          logger.error(err, "Error validating input");
+        } catch (error: unknown) {
+          logger.error(error, "Error validating input");
 
           // Handle validation errors specifically
-          if (err instanceof Error && err.message.startsWith("{")) {
+          if (error instanceof Error && error.message.startsWith("{")) {
             try {
-              const errorData = JSON.parse(err.message);
+              const errorData = JSON.parse(error.message);
               res.status(400).json({
                 error: "Validation failed",
                 message: errorData.message,
                 missingFields: errorData.missingFields,
               });
               return;
-            } catch (parseError) {
+            } catch (parseError: unknown) {
               logger.error(parseError, "Error parsing validation error");
             }
           }
@@ -63,7 +63,7 @@ export class APIRouter {
           // Fallback for other errors
           res.status(400).json({
             error: "Invalid input",
-            message: err instanceof Error ? err.message : "Unknown error",
+            message: error instanceof Error ? error.message : "Unknown error",
           });
         }
       },

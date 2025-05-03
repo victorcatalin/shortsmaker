@@ -35,9 +35,9 @@ export class PexelsAPI {
       },
     )
       .then((res) => res.json())
-      .catch((err) => {
-        logger.error(err, "Error fetching videos from Pexels API");
-        throw err;
+      .catch((error: unknown) => {
+        logger.error(error, "Error fetching videos from Pexels API");
+        throw error;
       });
     const videos = response.videos as {
       id: string;
@@ -145,10 +145,7 @@ export class PexelsAPI {
           throw error;
         }
 
-        logger.error(
-          { error, term: searchTerm },
-          "Error finding video in Pexels API for term",
-        );
+        logger.error(error, "Error finding video in Pexels API for term");
       }
     }
     logger.error(
