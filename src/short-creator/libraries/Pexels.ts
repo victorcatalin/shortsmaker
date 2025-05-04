@@ -1,13 +1,12 @@
 /* eslint-disable @remotion/deterministic-randomness */
+import { getOrientationConfig } from "../../components/utils";
 import { logger } from "../../logger";
-import type { Video } from "../../types/shorts";
+import { OrientationEnum, type Video } from "../../types/shorts";
 
 const jokerTerms: string[] = ["nature", "globe", "space", "ocean"];
 const durationBufferSeconds = 3;
 const defaultTimeoutMs = 5000;
 const retryTimes = 3;
-
-type Orientation = "portrait" | "landscape";
 
 export class PexelsAPI {
   constructor(private API_KEY: string) {}
@@ -16,7 +15,7 @@ export class PexelsAPI {
     searchTerm: string,
     minDurationSeconds: number,
     excludeIds: string[],
-    orientation: Orientation,
+    orientation: OrientationEnum,
     timeout: number,
   ): Promise<Video> {
     if (!this.API_KEY) {
@@ -55,8 +54,8 @@ export class PexelsAPI {
       }[];
     }[];
 
-    const requiredVideoWidth = orientation === "portrait" ? 1080 : 1920;
-    const requiredVideoHeight = orientation === "portrait" ? 1920 : 1080;
+    const { width: requiredVideoWidth, height: requiredVideoHeight } =
+      getOrientationConfig(orientation);
 
     if (!videos || videos.length === 0) {
       logger.error(
@@ -120,7 +119,7 @@ export class PexelsAPI {
     searchTerms: string[],
     minDurationSeconds: number,
     excludeIds: string[] = [],
-    orientation: Orientation = "portrait",
+    orientation: OrientationEnum = OrientationEnum.portrait,
     timeout: number = defaultTimeoutMs,
     retryCounter: number = 0,
   ): Promise<Video> {

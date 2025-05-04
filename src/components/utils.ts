@@ -1,5 +1,11 @@
 import { z } from "zod";
-import type { Caption, CaptionLine, CaptionPage } from "../../types/shorts";
+import type {
+  Caption,
+  CaptionPage,
+  CaptionLine,
+  OrientationEnum,
+} from "../types/shorts";
+import type { OrientationConfig } from "./types";
 
 export const shortVideoSchema = z.object({
   scenes: z.array(
@@ -118,4 +124,21 @@ export function createCaptionPages({
   }
 
   return pages;
+}
+
+export function getOrientationConfig(orientation: OrientationEnum) {
+  const config: Record<OrientationEnum, OrientationConfig> = {
+    portrait: {
+      width: 1080,
+      height: 1920,
+      component: "ShortVideo",
+    },
+    landscape: {
+      width: 1920,
+      height: 1080,
+      component: "LandscapeVideo",
+    },
+  };
+
+  return config[orientation];
 }

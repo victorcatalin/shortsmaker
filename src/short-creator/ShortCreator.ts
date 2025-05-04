@@ -1,3 +1,4 @@
+import { OrientationEnum } from "./../types/shorts";
 /* eslint-disable @remotion/deterministic-randomness */
 import fs from "fs-extra";
 import cuid from "cuid";
@@ -19,7 +20,6 @@ import type {
   VideoStatus,
   MusicMoodEnum,
   MusicTag,
-  OrientationEnum,
 } from "../types/shorts";
 
 export class ShortCreator {
@@ -102,7 +102,7 @@ export class ShortCreator {
     const tempFiles = [];
 
     const orientation: OrientationEnum =
-      config.orientation ?? ("portrait" as OrientationEnum);
+      config.orientation || OrientationEnum.portrait;
 
     let index = 0;
     for (const scene of inputScenes) {
@@ -133,7 +133,7 @@ export class ShortCreator {
         scene.searchTerms,
         audioLength,
         excludeVideoIds,
-        "landscape",
+        orientation,
       );
       excludeVideoIds.push(video.id);
 

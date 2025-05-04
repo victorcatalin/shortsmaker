@@ -74,7 +74,6 @@ export enum VoiceEnum {
 export enum OrientationEnum {
   landscape = "landscape",
   portrait = "portrait",
-  // square = "square",
 }
 
 export const renderConfig = z.object({

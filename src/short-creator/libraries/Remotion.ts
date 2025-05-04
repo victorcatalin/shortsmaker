@@ -8,6 +8,7 @@ import { Config } from "../../config";
 import { shortVideoSchema } from "../../components/videos/ShortVideo";
 import { logger } from "../../logger";
 import { OrientationEnum } from "../../types/shorts";
+import { getOrientationConfig } from "../../components/utils";
 
 export class Remotion {
   constructor(
@@ -37,8 +38,8 @@ export class Remotion {
     id: string,
     orientation: OrientationEnum,
   ) {
-    const component =
-      orientation === "portrait" ? "ShortVideo" : "LandscapeVideo";
+    const { component } = getOrientationConfig(orientation);
+
     const composition = await selectComposition({
       serveUrl: this.bundled,
       id: component,
@@ -89,6 +90,7 @@ export class Remotion {
           `Rendering test video: ${Math.floor(progress * 100)}% complete`,
         );
       },
+      // preventing memory issues with docker
       concurrency: this.config.concurrency,
       offthreadVideoCacheSizeInBytes: this.config.videoCacheSizeInBytes,
     });

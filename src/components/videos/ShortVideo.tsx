@@ -9,7 +9,7 @@ import {
 } from "remotion";
 import { z } from "zod";
 import { loadFont } from "@remotion/google-fonts/BarlowCondensed";
-import { createCaptionPages, shortVideoSchema } from "./utils";
+import { createCaptionPages, shortVideoSchema } from "../utils";
 
 const { fontFamily } = loadFont(); // "Barlow Condensed"
 
