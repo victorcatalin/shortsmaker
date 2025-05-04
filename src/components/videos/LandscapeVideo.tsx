@@ -59,7 +59,7 @@ export const LandscapeVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
         const { captions, audio, video } = scene;
         const pages = createCaptionPages({
           captions,
-          lineMaxLength: 20,
+          lineMaxLength: 30,
           lineCount: 1,
           maxDistanceMs: 1000,
         });
@@ -106,7 +106,7 @@ export const LandscapeVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
                       return (
                         <p
                           style={{
-                            fontSize: "6em",
+                            fontSize: "8em",
                             fontFamily: fontFamily,
                             fontWeight: "black",
                             color: "white",
