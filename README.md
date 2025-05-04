@@ -16,9 +16,29 @@ You can find example n8n workflows created with the REST/MCP server [in this rep
 
 # TOC
 
-TODO
+- [Examples](#examples)
+- [Features](#features)
+- [How it works](#how-it-works)
+- [Limitations](#limitations)
+- [Features](#features)
+- [Requirements (with Docker)](#requirements-with-docker)
+- [NPM](#npm)
+- [Concepts](#concepts)
+- [Getting started](#getting-started)
+- [Environment variables](#environment-variables)
+- [Configuration options](#configuration-options)
+- [Usage](#usage)
+- [REST API](#rest-api)
+- [MCP](#mcp-server)
+- [Troubleshooting](#troubleshooting)
+- [Deploying in the cloud](#deploying-to-the-cloud)
+- [FAQ](#faq)
+- [Dependencies](#dependencies-for-the-video-generation)
+- [Contributing](#how-to-contribute)
+- [License](#license)
+- [Acknowledgements](#acknowledgments)
 
-## Example
+# Examples
 
 <table>
   <tr>
@@ -32,7 +52,7 @@ TODO
   </tr>
 </table>
 
-## Features
+# Features
 
 - Generate complete short videos from text prompts
 - Text-to-speech conversion
@@ -41,7 +61,7 @@ TODO
 - Background music with genre/mood selection
 - Serve as both REST API and Model Context Protocol (MCP) server
 
-## How It Works
+# How It Works
 
 Shorts Creator takes simple text inputs and search terms, then:
 
