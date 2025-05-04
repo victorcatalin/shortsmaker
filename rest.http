@@ -16,7 +16,8 @@ Content-Type: application/json
       "music": "chill",
       "captionPosition": "center",
       "captionBackgroundColor": "#ff0000",
-      "voice": "bm_lewis"
+      "voice": "bm_lewis",
+      "orientation": "landscape"
     }
 }
 
