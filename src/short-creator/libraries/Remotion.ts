@@ -3,10 +3,9 @@ import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
 import path from "path";
 import { ensureBrowser } from "@remotion/renderer";
-import fs from "fs-extra";
 
 import { Config } from "../../config";
-import { shortVideoSchema } from "../../components/videos/PortraitVideo";
+import { shortVideoSchema } from "../../components/utils";
 import { logger } from "../../logger";
 import { OrientationEnum } from "../../types/shorts";
 import { getOrientationConfig } from "../../components/utils";

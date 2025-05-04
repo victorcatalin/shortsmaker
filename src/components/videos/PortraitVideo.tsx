@@ -13,8 +13,6 @@ import { createCaptionPages, shortVideoSchema } from "../utils";
 
 const { fontFamily } = loadFont(); // "Barlow Condensed"
 
-export { shortVideoSchema };
-
 export const PortraitVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
   scenes,
   music,
