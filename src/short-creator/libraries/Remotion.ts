@@ -72,4 +72,25 @@ export class Remotion {
       "Video rendered with Remotion",
     );
   }
+
+  async testRender(outputLocation: string) {
+    const composition = await selectComposition({
+      serveUrl: this.bundled,
+      id: "TestVideo",
+    });
+
+    await renderMedia({
+      codec: "h264",
+      composition,
+      serveUrl: this.bundled,
+      outputLocation,
+      onProgress: ({ progress }) => {
+        logger.debug(
+          `Rendering test video: ${Math.floor(progress * 100)}% complete`,
+        );
+      },
+      concurrency: this.config.concurrency,
+      offthreadVideoCacheSizeInBytes: this.config.videoCacheSizeInBytes,
+    });
+  }
 }

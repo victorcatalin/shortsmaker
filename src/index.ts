@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import path from "path";
+import fs from "fs-extra";
+
 import { Kokoro } from "./short-creator/libraries/Kokoro";
 import { Remotion } from "./short-creator/libraries/Remotion";
 import { Whisper } from "./short-creator/libraries/Whisper";
@@ -48,6 +51,35 @@ async function main() {
     pexelsApi,
     musicManager,
   );
+
+  if (!config.runningInDocker) {
+    // the project is running with npm - we need to check if the installation is correct
+    if (fs.existsSync(config.installationSuccessfulPath)) {
+      logger.info("the installation is successful - starting the server");
+    } else {
+      logger.info(
+        "testing if the installation was successful - this may take a while...",
+      );
+      try {
+        const audioBuffer = (await kokoro.generate("hi", "af_heart")).audio;
+        await ffmpeg.createMp3DataUri(audioBuffer);
+        await pexelsApi.findVideo(["dog"], 2.4);
+        const testVideoPath = path.join(config.tempDirPath, "test.mp4");
+        await remotion.testRender(testVideoPath);
+        fs.rmSync(testVideoPath, { force: true });
+        fs.writeFileSync(config.installationSuccessfulPath, "ok", {
+          encoding: "utf-8",
+        });
+        logger.info("the installation was successful - starting the server");
+      } catch (error: unknown) {
+        logger.fatal(
+          error,
+          "The environment is not set up correctly - please follow the instructions in the README.md file https://github.com/gyoridavid/short-video-maker",
+        );
+        process.exit(1);
+      }
+    }
+  }
 
   logger.debug("initializing the server");
   const server = new Server(config, shortCreator);

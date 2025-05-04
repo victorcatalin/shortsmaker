@@ -1,5 +1,6 @@
 import { CalculateMetadataFunction, Composition } from "remotion";
 import { ShortVideo, shortVideoSchema } from "../videos/ShortVideo";
+import { TestVideo } from "../videos/Test";
 import z from "zod";
 
 const FPS = 25;
@@ -88,6 +89,14 @@ export const RemotionRoot: React.FC = () => {
           },
         }}
         calculateMetadata={calculateMetadata}
+      />
+      <Composition
+        id="TestVideo"
+        component={TestVideo}
+        durationInFrames={14}
+        fps={23}
+        width={100}
+        height={100}
       />
     </>
   );

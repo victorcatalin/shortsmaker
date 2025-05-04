@@ -119,7 +119,7 @@ export class PexelsAPI {
   async findVideo(
     searchTerms: string[],
     minDurationSeconds: number,
-    excludeIds: string[],
+    excludeIds: string[] = [],
     orientation: Orientation = "portrait",
     timeout: number = defaultTimeoutMs,
     retryCounter: number = 0,
