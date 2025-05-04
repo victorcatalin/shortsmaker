@@ -2,9 +2,7 @@
 
 An open source automated video creation tool for generating short-form video content. Short Video Maker combines text-to-speech, automatic captions, background videos, and music to create engaging short videos from simple text inputs.
 
-This project meant to provide a free alternative to heavy GPU-power hungry video generation (and a free alternative to expensive, third-party API calls). The original purpose of this project was to run **locally.**
-
-But to set expectations, this project is not going to generate a video from scratch based on an image prompt.
+This project is meant to provide a free alternative to heavy GPU-power hungry video generation (and a free alternative to expensive, third-party API calls). It doesn't generate a video from scratch based on an image or an image prompt.
 
 The repository was open-sourced by the [AI Agents A-Z Youtube Channel](https://www.youtube.com/channel/UCloXqLhp_KGhHBe1kwaL2Tg). We encourage you to check out the channel for more AI-related content and tutorials.
 
@@ -17,21 +15,25 @@ You can find example n8n workflows created with the REST/MCP server [in this rep
 
 # TOC
 
+## Getting started
+
+- [Requirements](#general-requirements)
+- [How to run the server](#getting-started)
 - [Tutorial](#tutorial-with-n8n)
 - [Examples](#examples)
+
+## Usage
+
+- [Environment variables](#environment-variables)
+- [REST API](#rest-api)
+- [Configuration options](#configuration-options)
+- [MCP](#mcp-server)
+
+## Info
 - [Features](#features)
 - [How it works](#how-it-works)
 - [Limitations](#limitations)
-- [Features](#features)
-- [Requirements (with Docker)](#requirements-with-docker)
-- [NPM](#npm)
 - [Concepts](#concepts)
-- [Getting started](#getting-started)
-- [Environment variables](#environment-variables)
-- [Configuration options](#configuration-options)
-- [Usage](#usage)
-- [REST API](#rest-api)
-- [MCP](#mcp-server)
 - [Troubleshooting](#troubleshooting)
 - [Deploying in the cloud](#deploying-to-the-cloud)
 - [FAQ](#faq)
@@ -83,16 +85,7 @@ Shorts Creator takes simple text inputs and search terms, then:
 - The project only capable generating videos with English voiceover (kokoro-js doesn’t support other languages at the moment)
 - The background videos are sourced from Pexels
 
-# Features
-
-- portrait and landscape orientation mode (16:9 and 9:16) full HD video generation
-- selecting the background music by mood
-- adding “endscreen” to the videos (x amount of seconds after the speech, before the video ends)
-- changing the position of the captions
-- changing the color of the captions
-- changing the voice of the narration
-
-# Requirements (with Docker)
+# General Requirements
 
 - internet
 - free pexels api key
@@ -102,7 +95,8 @@ Shorts Creator takes simple text inputs and search terms, then:
 
 # NPM
 
-While Docker is the recommended way to run the project, you might run it with npm or npx.
+While Docker is the recommended way to run the project, you can run it with npm or npx.
+On top of the general requirements, the following are necessary to run the server.
 
 ## Supported platforms
 
