@@ -15,7 +15,7 @@ const { fontFamily } = loadFont(); // "Barlow Condensed"
 
 export { shortVideoSchema };
 
-export const ShortVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
+export const PortraitVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
   scenes,
   music,
   config,

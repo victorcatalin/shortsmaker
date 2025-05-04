@@ -1,7 +1,10 @@
 import { CalculateMetadataFunction, Composition } from "remotion";
-import { ShortVideo, shortVideoSchema } from "../videos/ShortVideo";
+import { shortVideoSchema } from "../utils";
+import { PortraitVideo } from "../videos/PortraitVideo";
+import { LandscapeVideo } from "../videos/LandscapeVideo";
 import { TestVideo } from "../videos/Test";
 import z from "zod";
+import { AvailableComponentsEnum } from "../types";
 
 const FPS = 25;
 
@@ -19,8 +22,8 @@ export const RemotionRoot: React.FC = () => {
   return (
     <>
       <Composition
-        id="ShortVideo"
-        component={ShortVideo}
+        id={AvailableComponentsEnum.PortraitVideo}
+        component={PortraitVideo}
         durationInFrames={30}
         fps={FPS}
         width={1080}
@@ -55,8 +58,8 @@ export const RemotionRoot: React.FC = () => {
         calculateMetadata={calculateMetadata}
       />
       <Composition
-        id="LandscapeVideo"
-        component={ShortVideo}
+        id={AvailableComponentsEnum.LandscapeVideo}
+        component={LandscapeVideo}
         durationInFrames={30}
         fps={FPS}
         width={1920}

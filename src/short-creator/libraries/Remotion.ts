@@ -5,7 +5,7 @@ import path from "path";
 import { ensureBrowser } from "@remotion/renderer";
 
 import { Config } from "../../config";
-import { shortVideoSchema } from "../../components/videos/ShortVideo";
+import { shortVideoSchema } from "../../components/videos/PortraitVideo";
 import { logger } from "../../logger";
 import { OrientationEnum } from "../../types/shorts";
 import { getOrientationConfig } from "../../components/utils";

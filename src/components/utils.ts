@@ -5,7 +5,7 @@ import type {
   CaptionLine,
   OrientationEnum,
 } from "../types/shorts";
-import type { OrientationConfig } from "./types";
+import { AvailableComponentsEnum, type OrientationConfig } from "./types";
 
 export const shortVideoSchema = z.object({
   scenes: z.array(
@@ -131,12 +131,12 @@ export function getOrientationConfig(orientation: OrientationEnum) {
     portrait: {
       width: 1080,
       height: 1920,
-      component: "ShortVideo",
+      component: AvailableComponentsEnum.PortraitVideo,
     },
     landscape: {
       width: 1920,
       height: 1080,
-      component: "LandscapeVideo",
+      component: AvailableComponentsEnum.LandscapeVideo,
     },
   };
 
