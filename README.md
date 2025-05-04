@@ -14,8 +14,10 @@ While the MCP server can be used with an AI Agent (like n8n) the REST endpoints 
 
 You can find example n8n workflows created with the REST/MCP server [in this repository](https://github.com/gyoridavid/ai_agents_az/tree/main/episode_7).
 
+
 # TOC
 
+- [Tutorial](#tutorial-with-n8n)
 - [Examples](#examples)
 - [Features](#features)
 - [How it works](#how-it-works)
@@ -37,6 +39,11 @@ You can find example n8n workflows created with the REST/MCP server [in this rep
 - [Contributing](#how-to-contribute)
 - [License](#license)
 - [Acknowledgements](#acknowledgments)
+
+# Tutorial with n8n
+
+[![Automated faceless video generation (n8n + MCP) with captions, background music, local and 100% free](https://img.youtube.com/vi/jzsQpn-AciM/0.jpg)](https://www.youtube.com/watch?v=jzsQpn-AciM)
+
 
 # Examples
 
