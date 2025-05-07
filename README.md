@@ -18,7 +18,7 @@ You can find example n8n workflows created with the REST/MCP server [in this rep
 ## Getting started
 
 - [Requirements](#general-requirements)
-- [How to run the server](#getting-started)
+- [How to run the server](#getting-started-1)
 - [Tutorial](#tutorial-with-n8n)
 - [Examples](#examples)
 
