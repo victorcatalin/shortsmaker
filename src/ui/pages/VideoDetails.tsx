@@ -20,7 +20,6 @@ const VideoDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<VideoStatus>('processing');
-  const [downloadLoading, setDownloadLoading] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMounted = useRef(true);
 
@@ -81,40 +80,6 @@ const VideoDetails: React.FC = () => {
     navigate('/');
   };
 
-  const handleDownload = async () => {
-    try {
-      setDownloadLoading(true);
-      
-      // Make a GET request to fetch the video with responseType set to 'blob'
-      const response = await axios.get(`/api/short-video/${videoId}`, {
-        responseType: 'blob'
-      });
-      
-      // Create a blob URL for the video
-      const blob = new Blob([response.data], { type: 'video/mp4' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create a temporary anchor element to trigger download
-      const link = document.createElement('a');
-      link.href = url;
-      
-      // Set the download attribute with a proper filename
-      link.download = `video-${videoId}.mp4`;
-      
-      // Append to body, click, and clean up
-      document.body.appendChild(link);
-      link.click();
-      
-      // Clean up
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading video:', error);
-      setError('Failed to download video. Please try again.');
-    } finally {
-      setDownloadLoading(false);
-    }
-  };
-
   const renderContent = () => {
     if (loading) {
       return (
@@ -171,13 +136,15 @@ const VideoDetails: React.FC = () => {
           
           <Box textAlign="center">
             <Button 
+              component="a"
+              href={`/api/short-video/${videoId}`}
+              download
               variant="contained" 
               color="primary" 
               startIcon={<DownloadIcon />}
-              onClick={handleDownload}
-              disabled={downloadLoading}
+              sx={{ textDecoration: 'none' }}
             >
-              {downloadLoading ? 'Downloading...' : 'Download Video'}
+              Download Video
             </Button>
           </Box>
         </Box>
