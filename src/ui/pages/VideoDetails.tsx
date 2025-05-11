@@ -12,13 +12,14 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DownloadIcon from '@mui/icons-material/Download';
+import { VideoStatus } from '../../types/shorts';
 
 const VideoDetails: React.FC = () => {
   const { videoId } = useParams<{ videoId: string }>();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string>('loading');
+  const [status, setStatus] = useState<VideoStatus>('processing');
   const [downloadLoading, setDownloadLoading] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMounted = useRef(true);
@@ -48,7 +49,7 @@ const VideoDetails: React.FC = () => {
     } catch (error) {
       if (isMounted.current) {
         setError('Failed to fetch video status');
-        setStatus('unknown');
+        setStatus('failed');
         setLoading(false);
         console.error('Error fetching video status:', error);
         

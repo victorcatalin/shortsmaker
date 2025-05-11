@@ -20,38 +20,36 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { 
+  SceneInput, 
+  RenderConfig, 
+  MusicMoodEnum, 
+  CaptionPositionEnum, 
+  VoiceEnum, 
+  OrientationEnum 
+} from '../../types/shorts';
 
-interface Scene {
+interface SceneFormData {
   text: string;
-  searchTerms: string[];
-  voice?: string;
-}
-
-interface VideoConfig {
-  paddingBack: number;
-  music: string;
-  captionPosition: 'top' | 'center' | 'bottom';
-  captionBackgroundColor: string;
-  voice: string;
-  orientation: 'portrait' | 'landscape';
+  searchTerms: string; // Changed to string
 }
 
 const VideoCreator: React.FC = () => {
   const navigate = useNavigate();
-  const [scenes, setScenes] = useState<Scene[]>([{ text: '', searchTerms: [''] }]);
-  const [config, setConfig] = useState<VideoConfig>({
+  const [scenes, setScenes] = useState<SceneFormData[]>([{ text: '', searchTerms: '' }]);
+  const [config, setConfig] = useState<RenderConfig>({
     paddingBack: 1500,
-    music: 'chill',
-    captionPosition: 'bottom',
+    music: MusicMoodEnum.chill,
+    captionPosition: CaptionPositionEnum.bottom,
     captionBackgroundColor: 'blue',
-    voice: 'af_heart',
-    orientation: 'portrait'
+    voice: VoiceEnum.af_heart,
+    orientation: OrientationEnum.portrait
   });
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [voices, setVoices] = useState<string[]>([]);
-  const [musicTags, setMusicTags] = useState<string[]>([]);
+  const [voices, setVoices] = useState<VoiceEnum[]>([]);
+  const [musicTags, setMusicTags] = useState<MusicMoodEnum[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
 
   useEffect(() => {
@@ -76,7 +74,7 @@ const VideoCreator: React.FC = () => {
   }, []);
 
   const handleAddScene = () => {
-    setScenes([...scenes, { text: '', searchTerms: [''] }]);
+    setScenes([...scenes, { text: '', searchTerms: '' }]);
   };
 
   const handleRemoveScene = (index: number) => {
@@ -87,18 +85,13 @@ const VideoCreator: React.FC = () => {
     }
   };
 
-  const handleSceneChange = (index: number, field: keyof Scene, value: string | string[]) => {
+  const handleSceneChange = (index: number, field: keyof SceneFormData, value: string) => {
     const newScenes = [...scenes];
     newScenes[index] = { ...newScenes[index], [field]: value };
     setScenes(newScenes);
   };
 
-  const handleSearchTermsChange = (index: number, value: string) => {
-    const terms = value.split(',').map(term => term.trim()).filter(term => term !== '');
-    handleSceneChange(index, 'searchTerms', terms);
-  };
-
-  const handleConfigChange = (field: keyof VideoConfig, value: any) => {
+  const handleConfigChange = (field: keyof RenderConfig, value: any) => {
     setConfig({ ...config, [field]: value });
   };
 
@@ -108,8 +101,17 @@ const VideoCreator: React.FC = () => {
     setError(null);
 
     try {
+      // Convert scenes to the expected API format
+      const apiScenes: SceneInput[] = scenes.map(scene => ({
+        text: scene.text,
+        searchTerms: scene.searchTerms
+          .split(',')
+          .map(term => term.trim())
+          .filter(term => term.length > 0)
+      }));
+
       const response = await axios.post('/api/short-video', {
-        scenes,
+        scenes: apiScenes,
         config
       });
 
@@ -177,27 +179,12 @@ const VideoCreator: React.FC = () => {
                 <TextField
                   fullWidth
                   label="Search Terms (comma-separated)"
-                  value={scene.searchTerms.join(', ')}
-                  onChange={(e) => handleSearchTermsChange(index, e.target.value)}
+                  value={scene.searchTerms}
+                  onChange={(e) => handleSceneChange(index, 'searchTerms', e.target.value)}
                   helperText="Enter keywords for background video, separated by commas"
                   required
                 />
               </Grid>
-              
-              {/* <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Voice (Optional)</InputLabel>
-                  <Select
-                    value={scene.voice || config.voice}
-                    onChange={(e) => handleSceneChange(index, 'voice', e.target.value)}
-                    label="Voice (Optional)"
-                  >
-                    {voices.map((voice) => (
-                      <MenuItem key={voice} value={voice}>{voice}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid> */}
             </Grid>
           </Paper>
         ))}
@@ -244,7 +231,7 @@ const VideoCreator: React.FC = () => {
                   label="Music Mood"
                   required
                 >
-                  {musicTags.map((tag) => (
+                  {Object.values(MusicMoodEnum).map((tag) => (
                     <MenuItem key={tag} value={tag}>{tag}</MenuItem>
                   ))}
                 </Select>
@@ -260,9 +247,9 @@ const VideoCreator: React.FC = () => {
                   label="Caption Position"
                   required
                 >
-                  <MenuItem value="top">Top</MenuItem>
-                  <MenuItem value="center">Center</MenuItem>
-                  <MenuItem value="bottom">Bottom</MenuItem>
+                  {Object.values(CaptionPositionEnum).map((position) => (
+                    <MenuItem key={position} value={position}>{position}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -287,7 +274,7 @@ const VideoCreator: React.FC = () => {
                   label="Default Voice"
                   required
                 >
-                  {voices.map((voice) => (
+                  {Object.values(VoiceEnum).map((voice) => (
                     <MenuItem key={voice} value={voice}>{voice}</MenuItem>
                   ))}
                 </Select>
@@ -303,8 +290,9 @@ const VideoCreator: React.FC = () => {
                   label="Orientation"
                   required
                 >
-                  <MenuItem value="portrait">Portrait</MenuItem>
-                  <MenuItem value="landscape">Landscape</MenuItem>
+                  {Object.values(OrientationEnum).map((orientation) => (
+                    <MenuItem key={orientation} value={orientation}>{orientation}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
