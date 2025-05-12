@@ -145,6 +145,9 @@ export type Music = {
   end: number;
   mood: string;
 };
+export type MusicForVideo = Music & {
+  url: string;
+};
 
 export type MusicTag = `${MusicMoodEnum}`;
 

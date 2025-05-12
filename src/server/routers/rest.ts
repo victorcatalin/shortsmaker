@@ -155,6 +155,29 @@ export class APIRouter {
     );
 
     this.router.get(
+      "/music/:fileName",
+      (req: ExpressRequest, res: ExpressResponse) => {
+        const { fileName } = req.params;
+        if (!fileName) {
+          res.status(400).json({
+            error: "fileName is required",
+          });
+          return;
+        }
+        const musicFilePath = path.join(this.config.musicDirPath, fileName);
+        if (!fs.existsSync(musicFilePath)) {
+          res.status(404).json({
+            error: "music file not found",
+          });
+          return;
+        }
+        const musicFileBuffer = fs.readFileSync(musicFilePath);
+        res.setHeader("Content-Type", "audio/mpeg");
+        res.send(musicFileBuffer);
+      },
+    );
+
+    this.router.get(
       "/short-video/:videoId",
       (req: ExpressRequest, res: ExpressResponse) => {
         try {

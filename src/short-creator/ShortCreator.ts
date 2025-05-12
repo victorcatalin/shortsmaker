@@ -20,6 +20,7 @@ import type {
   VideoStatus,
   MusicMoodEnum,
   MusicTag,
+  MusicForVideo,
 } from "../types/shorts";
 
 export class ShortCreator {
@@ -198,7 +199,7 @@ export class ShortCreator {
     return fs.readFileSync(videoPath);
   }
 
-  private findMusic(videoDuration: number, tag?: MusicMoodEnum): Music {
+  private findMusic(videoDuration: number, tag?: MusicMoodEnum): MusicForVideo {
     const musicFiles = this.musicManager.musicList().filter((music) => {
       if (tag) {
         return music.mood === tag;
