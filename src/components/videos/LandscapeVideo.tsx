@@ -47,7 +47,7 @@ export const LandscapeVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
     <AbsoluteFill style={{ backgroundColor: "white" }}>
       <Audio
         loop
-        src={`http://localhost:3123/api/music/${encodeURIComponent(music.file)}`}
+        src={music.url}
         startFrom={music.start * fps}
         endAt={music.end * fps}
         volume={0.1}
