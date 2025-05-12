@@ -30,12 +30,15 @@ export class Server {
     this.app.use("/mcp", mcpRouter.router);
 
     // Serve static files from the UI build
-    this.app.use(express.static(path.join(__dirname, '../../dist/ui')));
-    this.app.use('/static', express.static(path.join(__dirname, '../../static')));
+    this.app.use(express.static(path.join(__dirname, "../../dist/ui")));
+    this.app.use(
+      "/static",
+      express.static(path.join(__dirname, "../../static")),
+    );
 
     // Serve the React app for all other routes (must be last)
-    this.app.get('*', (req: ExpressRequest, res: ExpressResponse) => {
-      res.sendFile(path.join(__dirname, '../../dist/ui/index.html'));
+    this.app.get("*", (req: ExpressRequest, res: ExpressResponse) => {
+      res.sendFile(path.join(__dirname, "../../dist/ui/index.html"));
     });
   }
 
@@ -45,12 +48,15 @@ export class Server {
         { port: this.config.port, mcp: "/mcp", api: "/api" },
         "MCP and API server is running",
       );
+      logger.info(
+        `UI server is running on http://localhost:${this.config.port}`,
+      );
     });
 
-    server.on('error', (error: Error) => {
+    server.on("error", (error: Error) => {
       logger.error(error, "Error starting server");
     });
-    
+
     return server;
   }
 
