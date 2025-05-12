@@ -25,6 +25,7 @@ export const shortVideoSchema = z.object({
     durationMs: z.number(),
   }),
   music: z.object({
+    file: z.string(),
     url: z.string(),
     start: z.number(),
     end: z.number(),

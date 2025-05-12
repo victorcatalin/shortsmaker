@@ -141,7 +141,6 @@ export class APIRouter {
           });
           return;
         }
-        const tmpFileBuffer = fs.readFileSync(tmpFilePath);
 
         if (tmpFile.endsWith(".mp3")) {
           res.setHeader("Content-Type", "audio/mpeg");
@@ -150,7 +149,15 @@ export class APIRouter {
           res.setHeader("Content-Type", "audio/wav");
         }
 
-        res.send(tmpFileBuffer);
+        const tmpFileStream = fs.createReadStream(tmpFilePath);
+        tmpFileStream.on("error", (error) => {
+          logger.error(error, "Error reading tmp file");
+          res.status(500).json({
+            error: "Error reading tmp file",
+            tmpFile,
+          });
+        });
+        tmpFileStream.pipe(res);
       },
     );
 
@@ -171,9 +178,15 @@ export class APIRouter {
           });
           return;
         }
-        const musicFileBuffer = fs.readFileSync(musicFilePath);
-        res.setHeader("Content-Type", "audio/mpeg");
-        res.send(musicFileBuffer);
+        const musicFileStream = fs.createReadStream(musicFilePath);
+        musicFileStream.on("error", (error) => {
+          logger.error(error, "Error reading music file");
+          res.status(500).json({
+            error: "Error reading music file",
+            fileName,
+          });
+        });
+        musicFileStream.pipe(res);
       },
     );
 
