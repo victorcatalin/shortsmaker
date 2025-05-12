@@ -168,6 +168,7 @@ export class ShortCreator {
             captionBackgroundColor: config.captionBackgroundColor,
             captionPosition: config.captionPosition,
           },
+          musicVolume: config.musicVolume,
         },
       },
       videoId,
