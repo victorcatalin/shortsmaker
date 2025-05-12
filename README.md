@@ -19,6 +19,7 @@ You can find example n8n workflows created with the REST/MCP server [in this rep
 
 - [Requirements](#general-requirements)
 - [How to run the server](#getting-started-1)
+- [Web UI](#web-ui)
 - [Tutorial](#tutorial-with-n8n)
 - [Examples](#examples)
 
@@ -179,6 +180,29 @@ services:
 ```
 
 If you are using the [Self-hosted AI starter kit](https://github.com/n8n-io/self-hosted-ai-starter-kit) you want to add `networks: ['demo']` to the** `short-video-maker` service so you can reach it with http://short-video-maker:3123 in n8n.
+
+# Web UI
+
+@mushitori made a Web UI to generate the videos from your browser.
+
+<table>
+  <tr>
+    <td>
+      <img width="1088" alt="Screenshot 2025-05-12 at 1 45 11 PM" src="https://github.com/user-attachments/assets/2ab64aea-f639-41b0-bd19-2fcf73bb1a3d" />
+    </td>
+    <td>
+      <img width="1075" alt="Screenshot 2025-05-12 at 1 45 44 PM" src="https://github.com/user-attachments/assets/0ff568fe-ddcb-4dad-ae62-2640290aef1e" />
+    </td>
+    <td>
+      <img width="1083" alt="Screenshot 2025-05-12 at 1 45 51 PM" src="https://github.com/user-attachments/assets/d3c1c826-3cb3-4313-b17c-605ff612fb63" />
+    </td>
+    <td>
+      <img width="1070" alt="Screenshot 2025-05-12 at 1 46 42 PM" src="https://github.com/user-attachments/assets/18edb1a0-9fc2-48b3-8896-e919e7dc57ff" />
+    </td>
+  </tr>
+</table>
+
+You can load it on http://localhost:3123
 
 # Environment variables
 
