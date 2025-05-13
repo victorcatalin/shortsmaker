@@ -24,6 +24,7 @@ export enum CaptionPositionEnum {
 export type Scene = {
   captions: Caption[];
   video: string;
+  isImage?: boolean;
   audio: {
     url: string;
     duration: number;
@@ -177,3 +178,17 @@ export type whisperModels =
   | "large-v2"
   | "large-v3"
   | "large-v3-turbo";
+
+export const kenBurstSceneInput = z.object({
+  text: z.string().describe("Text to be spoken in the scene"),
+  imageId: z.string().describe("ID of the image to be used in the scene"),
+});
+
+export type KenBurstSceneInput = z.infer<typeof kenBurstSceneInput>;
+
+export const createKenBurstInput = z.object({
+  scenes: z.array(kenBurstSceneInput).describe("Each scene to be created"),
+  config: renderConfig.describe("Configuration for rendering the video"),
+});
+
+export type CreateKenBurstInput = z.infer<typeof createKenBurstInput>;

@@ -17,9 +17,14 @@ import {
   IconButton,
   Divider,
   InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup,
+  Card,
+  CardMedia,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import {
   SceneInput,
   RenderConfig,
@@ -28,15 +33,24 @@ import {
   VoiceEnum,
   OrientationEnum,
   MusicVolumeEnum,
+  KenBurstSceneInput,
 } from "../../types/shorts";
 
 interface SceneFormData {
   text: string;
-  searchTerms: string; // Changed to string
+  searchTerms: string;
+  imageId?: string;
+  imageUrl?: string;
+}
+
+interface ImageData {
+  id: string;
+  filename: string;
 }
 
 const VideoCreator: React.FC = () => {
   const navigate = useNavigate();
+  const [videoType, setVideoType] = useState<"regular" | "ken-burst">("regular");
   const [scenes, setScenes] = useState<SceneFormData[]>([
     { text: "", searchTerms: "" },
   ]);
@@ -55,21 +69,25 @@ const VideoCreator: React.FC = () => {
   const [voices, setVoices] = useState<VoiceEnum[]>([]);
   const [musicTags, setMusicTags] = useState<MusicMoodEnum[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState<number | null>(null);
+  const [availableImages, setAvailableImages] = useState<ImageData[]>([]);
 
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const [voicesResponse, musicResponse] = await Promise.all([
+        const [voicesResponse, musicResponse, imagesResponse] = await Promise.all([
           axios.get("/api/voices"),
           axios.get("/api/music-tags"),
+          axios.get("/api/images"),
         ]);
 
         setVoices(voicesResponse.data);
         setMusicTags(musicResponse.data);
+        setAvailableImages(imagesResponse.data.images);
       } catch (err) {
         console.error("Failed to fetch options:", err);
         setError(
-          "Failed to load voices and music options. Please refresh the page.",
+          "Failed to load voices, music options, or images. Please refresh the page.",
         );
       } finally {
         setLoadingOptions(false);
@@ -105,27 +123,73 @@ const VideoCreator: React.FC = () => {
     setConfig({ ...config, [field]: value });
   };
 
+  const handleImageUpload = async (index: number, file: File) => {
+    setUploadingImage(index);
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const response = await axios.post("/api/images", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const newScenes = [...scenes];
+      newScenes[index] = {
+        ...newScenes[index],
+        imageId: response.data.imageId,
+        imageUrl: `/api/images/${response.data.imageId}`,
+      };
+      setScenes(newScenes);
+
+      // Refresh available images
+      const imagesResponse = await axios.get("/api/images");
+      setAvailableImages(imagesResponse.data.images);
+    } catch (err) {
+      console.error("Failed to upload image:", err);
+      setError("Failed to upload image. Please try again.");
+    } finally {
+      setUploadingImage(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      // Convert scenes to the expected API format
-      const apiScenes: SceneInput[] = scenes.map((scene) => ({
-        text: scene.text,
-        searchTerms: scene.searchTerms
-          .split(",")
-          .map((term) => term.trim())
-          .filter((term) => term.length > 0),
-      }));
+      if (videoType === "regular") {
+        // Convert scenes to the expected API format for regular videos
+        const apiScenes: SceneInput[] = scenes.map((scene) => ({
+          text: scene.text,
+          searchTerms: scene.searchTerms
+            .split(",")
+            .map((term) => term.trim())
+            .filter((term) => term.length > 0),
+        }));
 
-      const response = await axios.post("/api/short-video", {
-        scenes: apiScenes,
-        config,
-      });
+        const response = await axios.post("/api/short-video", {
+          scenes: apiScenes,
+          config,
+        });
 
-      navigate(`/video/${response.data.videoId}`);
+        navigate(`/video/${response.data.videoId}`);
+      } else {
+        // Convert scenes to the expected API format for ken burst videos
+        const apiScenes: KenBurstSceneInput[] = scenes.map((scene) => ({
+          text: scene.text,
+          imageId: scene.imageId!,
+        }));
+
+        const response = await axios.post("/api/ken-burst-video", {
+          scenes: apiScenes,
+          config,
+        });
+
+        navigate(`/video/${response.data.videoId}`);
+      }
     } catch (err) {
       setError("Failed to create video. Please try again.");
       console.error(err);
@@ -152,6 +216,23 @@ const VideoCreator: React.FC = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         Create New Video
       </Typography>
+
+      <Box display="flex" justifyContent="center" mb={4}>
+        <ToggleButtonGroup
+          value={videoType}
+          exclusive
+          onChange={(_, value) => {
+            if (value) {
+              setVideoType(value);
+              // Reset scenes when switching video type
+              setScenes([{ text: "", searchTerms: "" }]);
+            }
+          }}
+        >
+          <ToggleButton value="regular">Regular Video</ToggleButton>
+          <ToggleButton value="ken-burst">Ken Burst Video</ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -199,18 +280,65 @@ const VideoCreator: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Search Terms (comma-separated)"
-                  value={scene.searchTerms}
-                  onChange={(e) =>
-                    handleSceneChange(index, "searchTerms", e.target.value)
-                  }
-                  helperText="Enter keywords for background video, separated by commas"
-                  required
-                />
-              </Grid>
+              {videoType === "regular" ? (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Search Terms (comma-separated)"
+                    value={scene.searchTerms}
+                    onChange={(e) =>
+                      handleSceneChange(index, "searchTerms", e.target.value)
+                    }
+                    helperText="Enter keywords for background video, separated by commas"
+                    required
+                  />
+                </Grid>
+              ) : (
+                <Grid item xs={12}>
+                  <Box>
+                    <input
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      id={`image-upload-${index}`}
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleImageUpload(index, file);
+                        }
+                      }}
+                    />
+                    <label htmlFor={`image-upload-${index}`}>
+                      <Button
+                        variant="outlined"
+                        component="span"
+                        startIcon={<CloudUploadIcon />}
+                        disabled={uploadingImage === index}
+                      >
+                        {uploadingImage === index ? (
+                          <CircularProgress size={24} />
+                        ) : scene.imageUrl ? (
+                          "Change Image"
+                        ) : (
+                          "Upload Image"
+                        )}
+                      </Button>
+                    </label>
+                    {scene.imageUrl && (
+                      <Box mt={2}>
+                        <Card>
+                          <CardMedia
+                            component="img"
+                            height="200"
+                            image={scene.imageUrl}
+                            alt={`Scene ${index + 1} image`}
+                          />
+                        </Card>
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+              )}
             </Grid>
           </Paper>
         ))}
@@ -369,7 +497,7 @@ const VideoCreator: React.FC = () => {
             variant="contained"
             color="primary"
             size="large"
-            disabled={loading}
+            disabled={loading || (videoType === "ken-burst" && scenes.some(s => !s.imageId))}
             sx={{ minWidth: 200 }}
           >
             {loading ? (

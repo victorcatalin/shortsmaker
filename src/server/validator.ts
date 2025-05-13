@@ -1,4 +1,4 @@
-import { createShortInput, CreateShortInput } from "../types/shorts";
+import { createShortInput, CreateShortInput, createKenBurstInput, CreateKenBurstInput } from "../types/shorts";
 import { logger } from "../logger";
 import { ZodError } from "zod";
 
@@ -44,4 +44,23 @@ function formatZodError(error: ZodError): ValidationErrorResult {
     message,
     missingFields,
   };
+}
+
+export function validateCreateKenBurstInput(input: object): CreateKenBurstInput {
+  const validated = createKenBurstInput.safeParse(input);
+  logger.info({ validated }, "Validated input");
+
+  if (validated.success) {
+    return validated.data;
+  }
+
+  // Process the validation errors
+  const errorResult = formatZodError(validated.error);
+
+  throw new Error(
+    JSON.stringify({
+      message: errorResult.message,
+      missingFields: errorResult.missingFields,
+    }),
+  );
 }

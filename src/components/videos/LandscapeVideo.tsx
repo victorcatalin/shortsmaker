@@ -14,6 +14,7 @@ import {
   createCaptionPages,
   shortVideoSchema,
 } from "../utils";
+import { KenBurnsImage } from "../effects/KenBurnsImage";
 
 const { fontFamily } = loadFont(); // "Barlow Condensed"
 
@@ -61,7 +62,7 @@ export const LandscapeVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
       />
 
       {scenes.map((scene, i) => {
-        const { captions, audio, video } = scene;
+        const { captions, audio, video, isImage } = scene;
         const pages = createCaptionPages({
           captions,
           lineMaxLength: 30,
@@ -69,26 +70,33 @@ export const LandscapeVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
           maxDistanceMs: 1000,
         });
 
-        // Calculate the start and end time of the scene
+        // Calculate the start frame of this scene's sequence
         const startFrame =
           scenes.slice(0, i).reduce((acc, curr) => {
             return acc + curr.audio.duration;
           }, 0) * fps;
-        let durationInFrames =
-          scenes.slice(0, i + 1).reduce((acc, curr) => {
-            return acc + curr.audio.duration;
-          }, 0) * fps;
+        
+        // Calculate the duration of this specific scene's sequence
+        let currentSceneSequenceDurationInFrames = audio.duration * fps;
         if (config.paddingBack && i === scenes.length - 1) {
-          durationInFrames += (config.paddingBack / 1000) * fps;
+          currentSceneSequenceDurationInFrames += (config.paddingBack / 1000) * fps;
         }
 
         return (
           <Sequence
             from={startFrame}
-            durationInFrames={durationInFrames}
+            durationInFrames={currentSceneSequenceDurationInFrames}
             key={`scene-${i}`}
           >
-            <OffthreadVideo src={video} muted />
+            {isImage ? (
+              <KenBurnsImage 
+                src={video}
+                isLandscape={true}
+                imageDurationInFrames={currentSceneSequenceDurationInFrames} 
+              />
+            ) : (
+              <OffthreadVideo src={video} muted />
+            )}
             <Audio src={audio.url} />
             {pages.map((page, j) => {
               return (

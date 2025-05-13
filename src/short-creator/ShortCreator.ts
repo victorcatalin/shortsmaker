@@ -21,11 +21,14 @@ import type {
   MusicMoodEnum,
   MusicTag,
   MusicForVideo,
+  KenBurstSceneInput,
 } from "../types/shorts";
+
+type ImageStatus = "ready" | "processing";
 
 export class ShortCreator {
   private queue: {
-    sceneInput: SceneInput[];
+    sceneInput: SceneInput[] | KenBurstSceneInput[];
     config: RenderConfig;
     id: string;
   }[] = [];
@@ -87,7 +90,7 @@ export class ShortCreator {
 
   private async createShort(
     videoId: string,
-    inputScenes: SceneInput[],
+    inputScenes: SceneInput[] | KenBurstSceneInput[],
     config: RenderConfig,
   ): Promise<string> {
     logger.debug(
@@ -130,17 +133,29 @@ export class ShortCreator {
       const captions = await this.whisper.CreateCaption(tempWavPath);
 
       await this.ffmpeg.saveToMp3(audioStream, tempMp3Path);
-      const video = await this.pexelsApi.findVideo(
-        scene.searchTerms,
-        audioLength,
-        excludeVideoIds,
-        orientation,
-      );
-      excludeVideoIds.push(video.id);
+
+      let videoUrl: string;
+      let isImage = false;
+      if ('searchTerms' in scene) {
+        // Handle regular scene with search terms
+        const video = await this.pexelsApi.findVideo(
+          scene.searchTerms,
+          audioLength,
+          excludeVideoIds,
+          orientation,
+        );
+        excludeVideoIds.push(video.id);
+        videoUrl = video.url;
+      } else {
+        // Handle ken burst scene with image ID
+        isImage = true;
+        videoUrl = `http://localhost:${this.config.port}/api/images/${scene.imageId}`;
+      }
 
       scenes.push({
         captions,
-        video: video.url,
+        video: videoUrl,
+        isImage,
         audio: {
           url: `http://localhost:${this.config.port}/api/tmp/${tempMp3FileName}`,
           duration: audioLength,
@@ -190,6 +205,19 @@ export class ShortCreator {
     const videoPath = this.getVideoPath(videoId);
     fs.removeSync(videoPath);
     logger.debug({ videoId }, "Deleted video file");
+  }
+
+  public deleteImage(imageId: string): void {
+    const files = fs.readdirSync(this.config.imagesDirPath);
+    const imageFile = files.find(file => file.startsWith(imageId));
+    
+    if (!imageFile) {
+      throw new Error(`Image ${imageId} not found`);
+    }
+
+    const imagePath = path.join(this.config.imagesDirPath, imageFile);
+    fs.removeSync(imagePath);
+    logger.debug({ imageId }, "Deleted image file");
   }
 
   public getVideo(videoId: string): Buffer {
@@ -255,7 +283,78 @@ export class ShortCreator {
     return videos;
   }
 
+  public listAllImages(): { id: string; filename: string; status: ImageStatus }[] {
+    const images: { id: string; filename: string; status: ImageStatus }[] = [];
+
+    // Check if images directory exists
+    if (!fs.existsSync(this.config.imagesDirPath)) {
+      return images;
+    }
+
+    // Read all files in the images directory
+    const files = fs.readdirSync(this.config.imagesDirPath);
+
+    // Process each image file
+    for (const file of files) {
+      const id = path.parse(file).name;
+      let status: ImageStatus = "ready";
+
+      // Check if image is being used in any processing ken burst video
+      const isInQueue = this.queue.some(item => {
+        if ('imageId' in item.sceneInput[0]) {
+          return (item.sceneInput as KenBurstSceneInput[]).some(
+            scene => scene.imageId === id
+          );
+        }
+        return false;
+      });
+
+      if (isInQueue) {
+        status = "processing";
+      }
+
+      images.push({ id, filename: file, status });
+    }
+
+    // Add images that are in the queue but not yet rendered
+    for (const queueItem of this.queue) {
+      if ('imageId' in queueItem.sceneInput[0]) {
+        const kenBurstScenes = queueItem.sceneInput as KenBurstSceneInput[];
+        for (const scene of kenBurstScenes) {
+          const existingImage = images.find(img => img.id === scene.imageId);
+          if (!existingImage) {
+            // If image is not found in the directory but is in queue, add it with processing status
+            images.push({
+              id: scene.imageId,
+              filename: `${scene.imageId} (processing)`,
+              status: "processing"
+            });
+          }
+        }
+      }
+    }
+
+    return images;
+  }
+
   public ListAvailableVoices(): string[] {
     return this.kokoro.listAvailableVoices();
+  }
+
+  public addKenBurstToQueue(
+    scenes: KenBurstSceneInput[],
+    config: RenderConfig,
+  ): string {
+    // todo add mutex lock
+    const id = cuid();
+    this.queue.push({
+      sceneInput: scenes,
+      config: config,
+      id,
+    });
+    if (this.queue.length === 1) {
+      this.processQueue();
+    }
+    return id;
   }
 }
