@@ -242,6 +242,7 @@ You can load it on http://localhost:3123
 | captionBackgroundColor | The background color of the active caption item. | `blue` |
 | voice | The Kokoro voice. | `af_heart` |
 | orientation | The video orientation. Possible options are `portrait` and `landscape` | `portrait` |
+| musicVolume | Set the volume of the background music. Possible options are `low` `medium` `high` and `muted` | `high` |
 
 # Usage
 
